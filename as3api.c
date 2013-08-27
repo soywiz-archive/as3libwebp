@@ -39,7 +39,12 @@ void DecodeWebp()
 		"var outputByteArray:ByteArray = new ByteArray();\n"
 		"CModule.readBytes(output_pointer, width * height * 4, outputByteArray);\n"
 		"outputByteArray.position = 0;\n"
+        : : 
+    );
+	
+	free(output_pointer);
 
+    inline_as3(
 		"var bitmapData:BitmapData = new BitmapData(width, height);\n"
 		"bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);\n"
 		"return bitmapData;\n"
