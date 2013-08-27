@@ -1,50 +1,50 @@
-// Copyright (c) 2013 Adobe Systems Inc
-
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
+#include "src/webp/decode.h"
 #include <stdlib.h>
 #include "AS3/AS3.h"
 
-// First we mark the function declaration with a GCC attribute specifying the
-// AS3 signature we want it to have in the generated SWC. The function will
-// be located in the sample.MurmurHash namespace.
-void MurmurHash3() __attribute__((used,
-	annotate("as3sig:public function MurmurHash3(keystr:String):uint"),
+void DecodeWebp() __attribute__((used,
+	annotate("as3import:flash.utils.ByteArray"),
+	annotate("as3import:flash.display.BitmapData"),
+	annotate("as3import:flash.geom.Rectangle"),
+	annotate("as3sig:public function DecodeWebp(inputByteArray:ByteArray):BitmapData"),
 	annotate("as3package:libwebp")));
 
-void MurmurHash3()
+void DecodeWebp()
 {
-    // Copy the AS3 string to the C heap (must be free'd later)
-    char *key = NULL;
-    AS3_MallocString(key, keystr);
+	int input_address;
+	int input_length;
+	uint8_t* output_pointer;
+	int width, height;
+	
+    inline_as3(
+		"var width:int, height:int, output_pointer:int;\n"
+		"var input_length:int = inputByteArray.length;\n"
+		"var input_address:int = CModule.malloc(input_length);\n"
+		"inputByteArray.position = 0;\n"
+		"CModule.writeBytes(input_address, input_length, inputByteArray);\n"
+		"inputByteArray.position = 0;\n"
+        : : 
+	);
+	
+	AS3_GetScalarFromVar(input_address, input_address);
+	AS3_GetScalarFromVar(input_length, input_length);
 
-    int keylen = 0;
-    AS3_StringLength(keylen, keystr);
-    
-    // Call hash function
-    int result = 0;
-    unsigned int seed = 42;
-    //MurmurHash3_x86_32(key, keylen, seed, &result);
-    
-    // don't forget to free the string we allocated with malloc previously
-    free(key);
-    
-    // return the result (using an AS3 return rather than a C/C++ return)
-    AS3_Return(result);
+	output_pointer = WebPDecodeARGB((const uint8_t*)input_address, (size_t)input_length, &width, &height);
+	
+	AS3_CopyScalarToVar(width, width);
+	AS3_CopyScalarToVar(height, height);
+	AS3_CopyScalarToVar(output_pointer, output_pointer);
+
+    inline_as3(
+		"var outputByteArray:ByteArray = new ByteArray();\n"
+		"CModule.readBytes(output_pointer, width * height * 4, outputByteArray);\n"
+		"outputByteArray.position = 0;\n"
+
+		"var bitmapData:BitmapData = new BitmapData(width, height);\n"
+		"bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);\n"
+		"return bitmapData;\n"
+        : : 
+    );
 }
+
+int main() { AS3_GoAsync(); }

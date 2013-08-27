@@ -61,9 +61,11 @@ T05: check
 		src/utils/quant_levels_dec.c \
 		\
 		as3api.c \
+		main.c \
 		\
-		-emit-swc=libwebp.internal \
+		-emit-swc=libwebp \
 		-o libwebp.swc
+	"$(FLEX)/bin/mxmlc" -static-link-runtime-shared-libraries -compiler.omit-trace-statements=false -library-path=libwebp.swc -debug=false swcdemo.as -o swcdemo.swf
 
 include ./Makefile.common
 
