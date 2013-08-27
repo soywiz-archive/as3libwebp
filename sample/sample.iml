@@ -8,6 +8,9 @@
             <entry library-id="a90e6a98-f9b0-42d6-9e06-06ed8221fc8d">
               <dependency linkage="Merged" />
             </entry>
+            <entry library-id="a294f11e-34c4-4366-8358-06c3e242fb0e">
+              <dependency linkage="Merged" />
+            </entry>
           </entries>
           <sdk name="airsdk" />
         </dependencies>
@@ -31,6 +34,16 @@
         <properties id="a90e6a98-f9b0-42d6-9e06-06ed8221fc8d" />
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../libwebp.swc!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library type="flex">
+        <properties id="a294f11e-34c4-4366-8358-06c3e242fb0e" />
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

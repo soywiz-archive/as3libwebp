@@ -13,35 +13,16 @@ package
 
 	public class Main extends Sprite
 	{
-		public function Main()
-		{
-			setTimeout(main, 0);
-		}
-
 		[Embed(source="test.webp", mimeType = "application/octet-stream")]
 		public var test_webp:Class;
 
 		[Embed(source="texture.webp", mimeType = "application/octet-stream")]
 		public var texture_webp:Class;
 
-		/*
-		static public function DecodeWebp(inputByteArray:ByteArray):BitmapData
+		public function Main()
 		{
-			var inputPointer:int = CModule.malloc(inputByteArray.length);
-			CModule.writeBytes(inputPointer, inputByteArray.length, inputByteArray);
-			var outputInfo:Object = _DecodeWebp(inputPointer, inputByteArray.length);
-			var width:int = outputInfo.width;
-			var height:int = outputInfo.height;
-			var outputPointer:int = outputInfo.output;
-			var outputByteArray:ByteArray = new ByteArray();
-			CModule.readBytes(outputPointer, width * height * 4, outputByteArray);
-			outputByteArray.position = 0;
-
-			var bitmapData:BitmapData = new BitmapData(width, height);
-			bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);
-			return bitmapData;
+			setTimeout(main, 0);
 		}
-		*/
 
 		function main():void
 		{
@@ -50,8 +31,6 @@ package
 
 			DecodeWebp(byteArray1);
 			DecodeWebp(byteArray2);
-			byteArray1.position = 0;
-			byteArray2.position = 0;
 
 			var p0:Number = new Date().getTime();
 			var bitmap1:Bitmap = new Bitmap(DecodeWebp(byteArray1));

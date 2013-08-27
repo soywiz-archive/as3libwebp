@@ -63,7 +63,7 @@ T05: check
 		as3api.c \
 		\
 		-emit-swc=libwebp.internal \
-		-o libwebp.swc
+		-o bin/libwebp.swc
 
 include ./Makefile.common
 
