@@ -1,4 +1,4 @@
-#include "src/webp/decode.h"
+#include "../libwebp/src/webp/decode.h"
 #include <stdlib.h>
 #include "AS3/AS3.h"
 
