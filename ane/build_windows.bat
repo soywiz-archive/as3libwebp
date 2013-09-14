@@ -65,7 +65,7 @@ SET WEBPEXT=
 SET WEBPEXT=%WEBPEXT% webp_extension.c
 
 DEL *.obj
-cl /O1 /Os /D_USRDLL /D_WINDLL /I"%AIRSDK%\include" %LIBWEBP% %WEBPEXT% "%AIRSDK%\lib\win\FlashRuntimeExtensions.lib" /MD /link /DLL /OUT:windows/WindowsLib.dll
+cl /O2 /D_USRDLL /D_WINDLL /I"%AIRSDK%\include" %LIBWEBP% %WEBPEXT% "%AIRSDK%\lib\win\FlashRuntimeExtensions.lib" /link /DLL /OUT:windows/WindowsLib.dll
 DEL *.obj
 DEL windows\*.lib
 DEL windows\*.exp
