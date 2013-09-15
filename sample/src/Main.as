@@ -4,13 +4,16 @@ package
 	import flash.display.BitmapData;
 	import flash.display.PixelSnapping;
 	import flash.display.Sprite;
+	import flash.external.ExtensionContext;
 	import flash.geom.Rectangle;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
+	import flash.text.ime.CompositionAttributeRange;
 	import flash.utils.ByteArray;
 	import flash.utils.setTimeout;
 
 	import libwebp.DecodeWebp;
+	//import com.example.extension.context.HelloNdkExtensionContext;
 
 	[SWF(width = 1280, height = 720, frameRate = 60)]
 	public class Main extends Sprite
@@ -24,16 +27,38 @@ package
 		[Embed(source="test3.webp", mimeType = "application/octet-stream")]
 		public var test3:Class;
 
+		[Embed(source="sample.jpg")]
+		public var sample_jpgClass:Class;
+
 		public function Main()
 		{
 			setTimeout(main, 0);
 		}
 
+		/**
+		 * Hello world.
+		 */
 		private function main():void
 		{
 			var byteArray1:ByteArray = new test_webp();
 			//var byteArray2:ByteArray = new texture_webp();
 			var byteArray2:ByteArray = new test3();
+
+			/*
+			var bitmapData:BitmapData = Bitmap(new sample_jpgClass()).bitmapData;
+
+			var p1:Number = new Date().getTime();
+
+			addChild(new Bitmap(bitmapData));
+			var p2:Number = new Date().getTime();
+			trace(p2 - p1);
+			return;
+			*/
+
+			//trace(ExtensionContext.createExtensionContext('webp', ''));
+
+			//trace(new HelloNdkExtensionContext().helloNDK());
+			//return;
 
 			DecodeWebp(byteArray1);
 			DecodeWebp(byteArray2);

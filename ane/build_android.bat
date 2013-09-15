@@ -1,5 +1,14 @@
 @ECHO OFF
 
+PUSHD jni
+CALL C:\Development\android-ndk-r6\ndk-build.cmd
+POPD
+COPY /Y libs\armeabi\libwebp_extension.so android\libAndroid.so
+RD /S /Q libs
+
+EXIT /B
+
+
 :: C:\Development\Android NDK\toolchains\arm-linux-androideabi-4.6\prebuilt\windows\bin
 :: arm-linux-androideabi-g++
 ::      -Iinclude -IC:\Development\Android NDK/sources/cpufeatures \

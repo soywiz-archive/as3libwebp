@@ -6,7 +6,7 @@
 #include "../libwebp/src/webp/decode.h"
 #include <FlashRuntimeExtensions.h>
 
-#define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
+//#define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
 
 /*
 FREObject WebpGetVersionAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
@@ -32,7 +32,7 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	FREObject result;
 	FREResult _result;
 	FREObject bitmapDataObject;
-	FREBitmapData2 bitmapData;
+	FREBitmapData bitmapData;
 	FREObject thrownException;
 	uint32_t* output_pointer = NULL;
 	int width, height;
@@ -76,13 +76,18 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 		goto cleanup;
 	}
 	
-	FREAcquireBitmapData2(bitmapDataObject, &bitmapData);
+	FREAcquireBitmapData(bitmapDataObject, &bitmapData);
 	{
-		int y;
+		int y, y2;
 		for (y = 0; y < height; y++) {
+			#ifdef __ANDROID__
+				y2 = y;
+			#else
+				y2 = (height - y - 1);
+			#endif
 			memcpy(
 				bitmapData.bits32 + bitmapData.lineStride32 * y,
-				output_pointer + width * (height - y - 1),
+				output_pointer + width * y2,
 				//output_pointer + width * y,
 				bitmapData.lineStride32 * 4
 			);

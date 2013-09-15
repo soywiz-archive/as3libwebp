@@ -33,7 +33,7 @@
       <configuration name="sample_air_android" target-platform="Mobile" pure-as="true" main-class="Main" output-file="sample_air_android.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies>
           <entries>
-            <entry library-id="12fa27de-bd16-4d2b-8fed-d92d86c8d08f">
+            <entry library-id="d206e0e0-bc14-4736-9480-b1cb248b30c6">
               <dependency linkage="Merged" />
             </entry>
           </entries>
@@ -41,7 +41,7 @@
         </dependencies>
         <compiler-options />
         <packaging-air-desktop />
-        <packaging-android enabled="true" use-generated-descriptor="false" custom-descriptor-path="$MODULE_DIR$/Main-app.xml" package-file-name="sample_air_android" />
+        <packaging-android enabled="true" custom-descriptor-path="$MODULE_DIR$/Main-app.xml" package-file-name="sample_air_android" />
         <packaging-ios package-file-name="sample_air_android" />
       </configuration>
     </configurations>
@@ -76,7 +76,7 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library type="flex">
-        <properties id="12fa27de-bd16-4d2b-8fed-d92d86c8d08f" />
+        <properties id="d206e0e0-bc14-4736-9480-b1cb248b30c6" />
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../bin/libwebp.ane!/" />
         </CLASSES>
