@@ -6,7 +6,7 @@ package libwebp
 	public function DecodeWebp(data:ByteArray):BitmapData
 	{
 		var info:* = context.call('WebpDecodeAne', data);
-		if (info === null || info.data === null) throw(new Error("Can't decode webp."));
+		if (info === null) return null;
 		return info.data;
 	}
 }

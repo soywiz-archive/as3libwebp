@@ -27,7 +27,7 @@ package
 		[Embed(source="test3.webp", mimeType = "application/octet-stream")]
 		public var test3:Class;
 
-		[Embed(source="sample.jpg")]
+		[Embed(source="sample.jpg", mimeType = "application/octet-stream")]
 		public var sample_jpgClass:Class;
 
 		public function Main()
@@ -43,6 +43,10 @@ package
 			var byteArray1:ByteArray = new test_webp();
 			//var byteArray2:ByteArray = new texture_webp();
 			var byteArray2:ByteArray = new test3();
+
+			var byteArray3:ByteArray = new sample_jpgClass();
+
+			if (DecodeWebp(byteArray3) != null) throw(new Error("Unexpected!"));
 
 			/*
 			var bitmapData:BitmapData = Bitmap(new sample_jpgClass()).bitmapData;

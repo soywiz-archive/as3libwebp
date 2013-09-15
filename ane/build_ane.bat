@@ -18,7 +18,7 @@ DEL library.swf 2> NUL
 DEL libwebp_ane.swc 2> NUL
 DEL ..\bin\libwebp.ane 2> NUL
 CALL "%AIRSDK%\bin\acompc" -source-path as3 -include-sources as3 -optimize -swf-version 13 -output libwebp_ane.swc
-7z -y e libwebp_ane.swc library.swf 2> NUL > NUL
+..\utils\7z -y e libwebp_ane.swc library.swf 2> NUL > NUL
 COPY /y library.swf windows\library.swf 2> NUL
 COPY /y library.swf android\library.swf 2> NUL
 COPY /y library.swf default\library.swf 2> NUL

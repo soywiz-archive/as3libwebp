@@ -63,6 +63,10 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	if ((_result = FREReleaseByteArray(argv[0])) != FRE_OK) {
 		goto cleanup;
 	}
+	
+	if (output_pointer == NULL) {
+		return NULL;
+	}
 
 	FRENewObjectFromInt32(width, &widthObject);
 	FRENewObjectFromInt32(height, &heightObject);

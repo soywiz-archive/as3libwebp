@@ -12,6 +12,7 @@ package
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
@@ -43,7 +44,7 @@ package
 
 		private function main():void
 		{
-			MouseWheel.capture();
+			if (ExternalInterface.available) MouseWheel.capture();
 			addChild(imageContainer = new Sprite());
 			var buttonShape:Sprite = new Sprite();
 			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
@@ -61,7 +62,6 @@ package
 
 			addChild(timeTextField);
 
-
 			var tf:TextField = new TextField();
 			tf.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER)
 			tf.text = "Select webp image...";
@@ -70,8 +70,9 @@ package
 			tf.y = 6;
 			buttonShape.addChild(tf);
 			//buttonShape.graphics.drawRect(0, 0, 320, 32);
-			var button = new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape);
+			var button:SimpleButton = new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape);
 			addChild(button);
+
 
 			DecodeWebp(new test3WebpByteArrayClass());
 			setImageFromWebpByteArray(new test3WebpByteArrayClass());
@@ -93,7 +94,7 @@ package
 			fileRef.load();
 		}
 
-		var image:MovieClip;
+		private var image:MovieClip;
 
 		private function onFileLoaded(e:Event):void
 		{
@@ -171,7 +172,7 @@ package
 
 		}
 
-		var imageScale:Number = 1.0;
+		private var imageScale:Number = 1.0;
 
 		private function mouseWheelHandler(event:MouseEvent):void
 		{
