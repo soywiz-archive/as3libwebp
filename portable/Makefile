@@ -62,6 +62,8 @@ T05: check
 		\
 		as3api.c \
 		\
+		-disable-telemetry \
+		-no-swf-preloader \
 		-emit-swc=libwebp.internal \
 		-o ../bin/libwebp.swc
 
