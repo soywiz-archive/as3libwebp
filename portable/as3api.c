@@ -29,27 +29,50 @@ void DecodeWebp()
 	AS3_GetScalarFromVar(input_address, input_address);
 	AS3_GetScalarFromVar(input_length, input_length);
 
-	output_pointer = WebPDecodeARGB((const uint8_t*)input_address, (size_t)input_length, &width, &height);
+	//output_pointer = WebPDecodeARGB((const uint8_t*)input_address, (size_t)input_length, &width, &height);
+	//output_pointer = WebPDecodeRGBA((const uint8_t*)input_address, (size_t)input_length, &width, &height);
+	output_pointer = WebPDecodeBGRA((const uint8_t*)input_address, (size_t)input_length, &width, &height);
 	
-	AS3_CopyScalarToVar(width, width);
-	AS3_CopyScalarToVar(height, height);
-	AS3_CopyScalarToVar(output_pointer, output_pointer);
-
     inline_as3(
-		"var outputByteArray:ByteArray = new ByteArray();\n"
-		"CModule.readBytes(output_pointer, width * height * 4, outputByteArray);\n"
-		"outputByteArray.position = 0;\n"
+		"CModule.free(input_address);\n"
         : : 
-    );
+	);
 	
-	free(output_pointer);
+	if (output_pointer == NULL) {
+		inline_as3(
+			"return null;\n"
+			: : 
+		);
+	} else {
+		AS3_CopyScalarToVar(width, width);
+		AS3_CopyScalarToVar(height, height);
+		AS3_CopyScalarToVar(output_pointer, output_pointer);
 
-    inline_as3(
-		"var bitmapData:BitmapData = new BitmapData(width, height);\n"
-		"bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);\n"
-		"return bitmapData;\n"
-        : : 
-    );
+		inline_as3(
+			"ram_init.position = output_pointer;\n"
+			"var bitmapData:BitmapData = new BitmapData(width, height);\n"
+			"bitmapData.setPixels(new Rectangle(0, 0, width, height), ram_init);\n"
+			: : 
+		);
+
+		/*
+		inline_as3(
+			"var outputByteArray:ByteArray = new ByteArray();\n"
+			"CModule.readBytes(output_pointer, width * height * 4, outputByteArray);\n"
+			"outputByteArray.position = 0;\n"
+			"var bitmapData:BitmapData = new BitmapData(width, height);\n"
+			"bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);\n"
+			: : 
+		);
+		*/
+
+		free(output_pointer);
+
+		inline_as3(
+			"return bitmapData;\n"
+			: : 
+		);
+	}
 }
 
 int main() { AS3_GoAsync(); }

@@ -115,7 +115,11 @@ package
 			var bitmapData:BitmapData = DecodeWebp(byteArray);
 			var endTime:Number = new Date().getTime();
 			//trace(endTime - startTime);
-			timeTextField.text = 'Webp image with size ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
+			if (bitmapData == null) {
+				timeTextField.text = 'Invalid Webp image';
+			} else {
+				timeTextField.text = 'Webp image with size ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
+			}
 			stage_resizeHandler(null);
 			var bmp:Bitmap = new Bitmap(bitmapData, PixelSnapping.AUTO, true);
 			bmp.x = -bmp.width / 2;
@@ -164,6 +168,7 @@ package
 		{
 			moveMouseStart = null;
 			//image.stopDrag();
+
 		}
 
 		var imageScale:Number = 1.0;
