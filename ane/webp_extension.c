@@ -2,6 +2,7 @@
 //BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { return TRUE; }
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "../libwebp/src/webp/decode.h"
 #include <FlashRuntimeExtensions.h>
 
@@ -145,12 +146,17 @@ void contextFinalizer(FREContext ctx)
 {
 }
 
-__declspec(dllexport) void initializer(void** extData, FREContextInitializer* ctxInitializer, FREContextFinalizer* ctxFinalizer)
+#ifdef _WINDLL
+#define DLL_EXPORT __declspec(dllexport)
+#else
+#define DLL_EXPORT 
+#endif
+DLL_EXPORT void initializer(void** extData, FREContextInitializer* ctxInitializer, FREContextFinalizer* ctxFinalizer)
 {
 	*ctxInitializer = &contextInitializer;
 	*ctxFinalizer = &contextFinalizer;
 }
 
-__declspec(dllexport) void finalizer(void* extData)
+DLL_EXPORT void finalizer(void* extData)
 {
 }

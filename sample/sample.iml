@@ -41,7 +41,7 @@
         </dependencies>
         <compiler-options />
         <packaging-air-desktop />
-        <packaging-android enabled="true" package-file-name="sample_air_android" />
+        <packaging-android enabled="true" use-generated-descriptor="false" custom-descriptor-path="$MODULE_DIR$/Main-app.xml" package-file-name="sample_air_android" />
         <packaging-ios package-file-name="sample_air_android" />
       </configuration>
     </configurations>

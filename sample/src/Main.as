@@ -29,7 +29,7 @@ package
 			setTimeout(main, 0);
 		}
 
-		function main():void
+		private function main():void
 		{
 			var byteArray1:ByteArray = new test_webp();
 			//var byteArray2:ByteArray = new texture_webp();

@@ -4,10 +4,17 @@
 	<platforms>
 		<platform name="Windows-x86">
 			<applicationDeployment>
-				<nativeLibrary>WindowsLib.dll</nativeLibrary>
+				<nativeLibrary>libWindows.dll</nativeLibrary>
 				<initializer>initializer</initializer>
 				<finalizer>finalizer</finalizer>
 			</applicationDeployment>
+		</platform>
+		<platform name="Android-ARM">
+			<applicationDeployment>			
+				<nativeLibrary>libAndroid.so</nativeLibrary>
+				<initializer>initializer</initializer>
+				<finalizer>finalizer</finalizer>
+			</applicationDeployment>		
 		</platform>
 		<platform name="default">
 			<applicationDeployment>

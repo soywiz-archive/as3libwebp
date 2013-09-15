@@ -10,7 +10,7 @@ SET PLATFORMS=
 REM SET PLATFORMS=%PLATFORMS% -platformoptions platformoptions.xml
 
 REM SET PLATFORMS=%PLATFORMS% -platform iPhone-ARM -C ios .
-REM SET PLATFORMS=%PLATFORMS% -platform Android-ARM -C android .
+SET PLATFORMS=%PLATFORMS% -platform Android-ARM -C android .
 SET PLATFORMS=%PLATFORMS% -platform Windows-x86 -C windows .
 SET PLATFORMS=%PLATFORMS% -platform default -C default .
 
@@ -20,6 +20,7 @@ DEL ..\bin\libwebp.ane 2> NUL
 CALL "%AIRSDK%\bin\acompc" -source-path as3 -include-sources as3 -optimize -swf-version 13 -output libwebp_ane.swc
 7z -y e libwebp_ane.swc library.swf 2> NUL > NUL
 COPY /y library.swf windows\library.swf 2> NUL
+COPY /y library.swf android\library.swf 2> NUL
 COPY /y library.swf default\library.swf 2> NUL
 DEL library.swf 2> NUL
 REM CALL "%AIRSDK%\bin\adt" -package -target ane libwebp.ane extension.xml -swc libwebp_ane.swc %PLATFORMS%
