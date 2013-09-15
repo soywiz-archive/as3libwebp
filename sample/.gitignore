@@ -1,0 +1,7 @@
+*.swf
+*.stackdump
+*.o
+*.obj
+out
+*.iws
+Thumbs.db

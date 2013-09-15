@@ -9,5 +9,9 @@
 				<finalizer>finalizer</finalizer>
 			</applicationDeployment>
 		</platform>
+		<platform name="default">
+			<applicationDeployment>
+			</applicationDeployment>
+		</platform>
 	</platforms>
 </extension>

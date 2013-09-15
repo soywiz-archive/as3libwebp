@@ -4,14 +4,6 @@
     <configurations>
       <configuration name="sample" pure-as="true" main-class="Main" output-file="sample.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies target-player="11.8">
-          <entries>
-            <entry library-id="a90e6a98-f9b0-42d6-9e06-06ed8221fc8d">
-              <dependency linkage="Merged" />
-            </entry>
-            <entry library-id="a294f11e-34c4-4366-8358-06c3e242fb0e">
-              <dependency linkage="Merged" />
-            </entry>
-          </entries>
           <sdk name="airsdk" />
         </dependencies>
         <compiler-options />
@@ -29,26 +21,6 @@
     </content>
     <orderEntry type="jdk" jdkName="airsdk" jdkType="Flex SDK Type (new)" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
-      <library type="flex">
-        <properties id="a90e6a98-f9b0-42d6-9e06-06ed8221fc8d" />
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../libwebp.swc!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library type="flex">
-        <properties id="a294f11e-34c4-4366-8358-06c3e242fb0e" />
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
   </component>
 </module>
 
