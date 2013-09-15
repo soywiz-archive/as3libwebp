@@ -8,6 +8,8 @@ package
 	import flash.display.Shape;
 	import flash.display.SimpleButton;
 	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
@@ -22,7 +24,7 @@ package
 
 	import libwebp.DecodeWebp;
 
-	[SWF(width = 500, height = 320, frameRate = 60)]
+	[SWF(width = 1280, height = 720, frameRate = 60)]
 	public class MainFileSelector extends Sprite
 	{
 		public function MainFileSelector()
@@ -49,13 +51,14 @@ package
 			buttonShape.graphics.drawRect(0, 0, 320, 32);
 			buttonShape.graphics.endFill();
 
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+
+			stage.addEventListener(Event.RESIZE, stage_resizeHandler);
+
 			timeTextField = new TextField();
-			timeTextField.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.RIGHT);
-			timeTextField.background = true;
-			timeTextField.backgroundColor = 0x000000;
-			timeTextField.autoSize = TextFieldAutoSize.RIGHT;
-			timeTextField.x = stage.stageWidth - 4;
-			timeTextField.y = stage.stageHeight - 16 - 4;
+			stage_resizeHandler(null);
+
 			addChild(timeTextField);
 
 
@@ -112,7 +115,8 @@ package
 			var bitmapData:BitmapData = DecodeWebp(byteArray);
 			var endTime:Number = new Date().getTime();
 			//trace(endTime - startTime);
-			timeTextField.text = 'Webp image loaded in ' + (endTime - startTime) + 'ms';
+			timeTextField.text = 'Webp image with size ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
+			stage_resizeHandler(null);
 			var bmp:Bitmap = new Bitmap(bitmapData, PixelSnapping.AUTO, true);
 			bmp.x = -bmp.width / 2;
 			bmp.y = -bmp.height / 2;
@@ -171,6 +175,22 @@ package
 			if (event.delta < 0) scaleMultiplier = 1 / scaleMultiplier;
 			this.imageScale *= scaleMultiplier;
 			updateScale();
+		}
+
+		private function stage_resizeHandler(event:Event):void
+		{
+			timeTextField.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.LEFT);
+			timeTextField.background = true;
+			timeTextField.backgroundColor = 0x000000;
+			timeTextField.text = timeTextField.text;
+			timeTextField.autoSize = TextFieldAutoSize.LEFT;
+			timeTextField.x = stage.stageWidth - 4 - timeTextField.textWidth;
+			timeTextField.y = stage.stageHeight - 16 - 4;
+			setTimeout(function():void {
+				timeTextField.x = stage.stageWidth - 4 - timeTextField.textWidth;
+				timeTextField.y = stage.stageHeight - 16 - 4;
+			}, 0);
+			//timeTextField.autoSize = TextFieldAutoSize.RIGHT;
 		}
 	}
 }
