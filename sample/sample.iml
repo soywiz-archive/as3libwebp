@@ -44,6 +44,20 @@
         <packaging-android enabled="true" custom-descriptor-path="$MODULE_DIR$/Main-app.xml" package-file-name="sample_air_android" />
         <packaging-ios package-file-name="sample_air_android" />
       </configuration>
+      <configuration name="sample_flash_web" pure-as="true" main-class="Main" output-file="sample_flash_web.swf" output-folder="$MODULE_DIR$/out/production/sample" use-html-wrapper="true" wrapper-template-path="$MODULE_DIR$/../html-template">
+        <dependencies target-player="11.8">
+          <entries>
+            <entry library-id="ba68dd6f-6446-412e-8d29-3515a45b237b">
+              <dependency linkage="Merged" />
+            </entry>
+          </entries>
+          <sdk name="airsdk" />
+        </dependencies>
+        <compiler-options />
+        <packaging-air-desktop />
+        <packaging-android />
+        <packaging-ios />
+      </configuration>
     </configurations>
     <compiler-options />
   </component>
@@ -79,6 +93,16 @@
         <properties id="d206e0e0-bc14-4736-9480-b1cb248b30c6" />
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../bin/libwebp.ane!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library type="flex">
+        <properties id="ba68dd6f-6446-412e-8d29-3515a45b237b" />
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

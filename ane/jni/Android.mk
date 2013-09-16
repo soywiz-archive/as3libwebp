@@ -8,6 +8,11 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := webp_extension
 APP_ABI := armeabi-v7a 
+#APP_ABI := armeabi armeabi-v7a x86 mips
+ARCH := $(APP_ABI)
+APP_OPTIM := release
+LOCAL_CFLAGS=-ffast-math -O3
+LOCAL_CFLAGS += -DNDEBUG
 LOCAL_SRC_FILES := \
 	../../libwebp/src/dec/alpha.c \
 	../../libwebp/src/dec/buffer.c \

@@ -42,9 +42,38 @@ package
 
 		private var timeTextField:TextField;
 
+		static private function eval(string:String, args:* = null):*
+		{
+			try {
+				if (ExternalInterface.available)
+				{
+					if (args === null) args = {};
+					var evalString:String = '';
+					evalString += 'function(__args) { ';
+					for (var k:String in args) evalString += 'var ' + k + ' = __args[' + JSON.stringify(k) + ']; ';
+					evalString += string;
+					evalString += '}';
+					return ExternalInterface.call(evalString, args);
+				}
+			} catch (e:*) {
+			}
+			return undefined;
+		}
+
+		static private function isEvalAvailable():Boolean
+		{
+			var obj:* = { a : 777 };
+			return eval('return a;', obj) == obj.a;
+		}
+
 		private function main():void
 		{
+			//trace('isEvalAvailable: ' + isEvalAvailable());
+			//eval("window.addEventListener('mousewheel', function(e) { e.preventDefault(); });");
+			//eval("alert(v);", {v : 'HELLO WORLD!'});
+
 			if (ExternalInterface.available) MouseWheel.capture();
+
 			addChild(imageContainer = new Sprite());
 			var buttonShape:Sprite = new Sprite();
 			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
@@ -64,7 +93,8 @@ package
 
 			var tf:TextField = new TextField();
 			tf.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER)
-			tf.text = "Select webp image...";
+			tf.selectable = false;
+			tf.text = "Select webp image... ";
 			tf.width = 320;
 			tf.height = 32;
 			tf.y = 6;
@@ -119,7 +149,7 @@ package
 			if (bitmapData == null) {
 				timeTextField.text = 'Invalid Webp image';
 			} else {
-				timeTextField.text = 'Webp image with size ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
+				timeTextField.text = 'Webp image with size (' + bitmapData.width + 'x' + bitmapData.height + ') ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
 			}
 			stage_resizeHandler(null);
 			var bmp:Bitmap = new Bitmap(bitmapData, PixelSnapping.AUTO, true);
@@ -190,6 +220,7 @@ package
 			timeTextField.backgroundColor = 0x000000;
 			timeTextField.text = timeTextField.text;
 			timeTextField.autoSize = TextFieldAutoSize.LEFT;
+			timeTextField.selectable = false;
 			timeTextField.x = stage.stageWidth - 4 - timeTextField.textWidth;
 			timeTextField.y = stage.stageHeight - 16 - 4;
 			setTimeout(function():void {
