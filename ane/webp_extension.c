@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../libwebp/src/webp/decode.h"
 #include <FlashRuntimeExtensions.h>
 
