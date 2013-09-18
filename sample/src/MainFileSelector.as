@@ -24,6 +24,7 @@ package
 	import flash.utils.setTimeout;
 
 	import libwebp.DecodeWebp;
+	import libwebp.EncodeWebp;
 
 	[SWF(width = 1280, height = 720, frameRate = 60)]
 	public class MainFileSelector extends Sprite
@@ -42,28 +43,24 @@ package
 
 		private var timeTextField:TextField;
 
-		static private function eval(string:String, args:* = null):*
+		private function createButton(text:String):SimpleButton
 		{
-			try {
-				if (ExternalInterface.available)
-				{
-					if (args === null) args = {};
-					var evalString:String = '';
-					evalString += 'function(__args) { ';
-					for (var k:String in args) evalString += 'var ' + k + ' = __args[' + JSON.stringify(k) + ']; ';
-					evalString += string;
-					evalString += '}';
-					return ExternalInterface.call(evalString, args);
-				}
-			} catch (e:*) {
-			}
-			return undefined;
-		}
+			var buttonShape:Sprite = new Sprite();
+			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
+			buttonShape.graphics.beginFill(0x000000, 0.3);
+			buttonShape.graphics.drawRect(0, 0, 320, 32);
+			buttonShape.graphics.endFill();
 
-		static private function isEvalAvailable():Boolean
-		{
-			var obj:* = { a : 777 };
-			return eval('return a;', obj) == obj.a;
+			var tf:TextField = new TextField();
+			tf.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER)
+			tf.selectable = false;
+			tf.text = text;
+			tf.width = 320;
+			tf.height = 32;
+			tf.y = 6;
+			buttonShape.addChild(tf);
+			//buttonShape.graphics.drawRect(0, 0, 320, 32);
+			return new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape);
 		}
 
 		private function main():void
@@ -75,11 +72,6 @@ package
 			if (ExternalInterface.available) MouseWheel.capture();
 
 			addChild(imageContainer = new Sprite());
-			var buttonShape:Sprite = new Sprite();
-			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
-			buttonShape.graphics.beginFill(0x000000, 0.3);
-			buttonShape.graphics.drawRect(0, 0, 320, 32);
-			buttonShape.graphics.endFill();
 
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
@@ -91,25 +83,28 @@ package
 
 			addChild(timeTextField);
 
-			var tf:TextField = new TextField();
-			tf.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER)
-			tf.selectable = false;
-			tf.text = "Select webp image... ";
-			tf.width = 320;
-			tf.height = 32;
-			tf.y = 6;
-			buttonShape.addChild(tf);
-			//buttonShape.graphics.drawRect(0, 0, 320, 32);
-			var button:SimpleButton = new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape);
-			addChild(button);
-
 
 			DecodeWebp(new test3WebpByteArrayClass());
 			setImageFromWebpByteArray(new test3WebpByteArrayClass());
 
 			fileRef = new FileReference();
+			var button:SimpleButton = createButton("Select webp image... ");
+			addChild(button);
 			button.addEventListener(MouseEvent.CLICK, onButtonClick);
+
+			var button2:SimpleButton = createButton("Save webp image (q=50)... ");
+			button2.x += 320;
+			addChild(button2);
+			button2.addEventListener(MouseEvent.CLICK, onSaveClick);
+
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheelHandler);
+		}
+
+		private function onSaveClick(e:MouseEvent):void
+		{
+			var fileRef:FileReference = new FileReference();
+			var byteArray:ByteArray = libwebp.EncodeWebp(bitmapData, 50);
+			fileRef.save(byteArray, 'output.webp');
 		}
 
 		private function onButtonClick(e:MouseEvent):void
@@ -131,6 +126,8 @@ package
 			setImageFromWebpByteArray(e.target.data);
 		}
 
+		var bitmapData:BitmapData;
+
 		private function setImageFromWebpByteArray(byteArray:ByteArray):void
 		{
 			if (image != null)
@@ -143,7 +140,7 @@ package
 			imageContainer.removeChildren();
 			image = new MovieClip();
 			var startTime:Number = new Date().getTime();
-			var bitmapData:BitmapData = DecodeWebp(byteArray);
+			bitmapData = DecodeWebp(byteArray);
 			var endTime:Number = new Date().getTime();
 			//trace(endTime - startTime);
 			if (bitmapData == null) {
