@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>As3libwebp by soywiz</title>
+    <title>as3libwebp</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -16,7 +16,7 @@
     <div class="wrapper">
       <header>
         <h1>as3libwebp</h1>
-        <p>Load WEBP images on Flash using FlashCC or faster ANEs</p>
+        <p>Load and save WEBP images on Flash using FlashCC or faster ANEs</p>
 
         <p class="view"><a href="https://github.com/soywiz/as3libwebp">View the Project on GitHub <small>soywiz/as3libwebp</small></a></p>
 
@@ -51,7 +51,9 @@
 
 		<h3>API:</h3>
 		
-<pre style="white-space:pre-line;"><code>function libwebp.DecodeWebp(data:ByteArray):BitmapData;
+<pre style="white-space:pre-line;"><code>package libwebp;
+function DecodeWebp(webpByteArray:ByteArray):BitmapData;
+function EncodeWebp(input:BitmapData, quality:Number):ByteArray;
 </code></pre>
 
 		<h3>Notes:</h3>
