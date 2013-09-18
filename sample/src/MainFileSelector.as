@@ -103,8 +103,17 @@ package
 		private function onSaveClick(e:MouseEvent):void
 		{
 			var fileRef:FileReference = new FileReference();
+			var startTime:Number = new Date().getTime();
 			var byteArray:ByteArray = libwebp.EncodeWebp(bitmapData, 50);
-			fileRef.save(byteArray, 'output.webp');
+			var endTime:Number = new Date().getTime();
+			if (byteArray == null) {
+				timeTextField.text = "Couldn't encode Webp image";
+				stage_resizeHandler(null);
+			} else {
+				timeTextField.text = 'Image with size (' + bitmapData.width + 'x' + bitmapData.height + ') encoded with size ' + (int((byteArray.length / 1024)*100)/100) + 'kb in ' + (endTime - startTime) + 'ms';
+				stage_resizeHandler(null);
+				fileRef.save(byteArray, 'output.webp');
+			}
 		}
 
 		private function onButtonClick(e:MouseEvent):void
