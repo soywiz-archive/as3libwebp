@@ -11,6 +11,7 @@ package
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.FocusEvent;
 	import flash.events.MouseEvent;
 	import flash.external.ExternalInterface;
 	import flash.geom.Point;
@@ -18,8 +19,10 @@ package
 	import flash.net.FileReference;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
+	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
 	import flash.text.TextFormatAlign;
+	import flash.utils.ByteArray;
 	import flash.utils.ByteArray;
 	import flash.utils.setTimeout;
 
@@ -43,9 +46,9 @@ package
 
 		private var timeTextField:TextField;
 
-		private function createButton(text:String):SimpleButton
+		private function createButton(text:String):Array
 		{
-			var width:int = 240;
+			var width:int = 180;
 			var height:int = 32;
 			var buttonShape:Sprite = new Sprite();
 			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
@@ -62,7 +65,10 @@ package
 			tf.y = 6;
 			buttonShape.addChild(tf);
 			//buttonShape.graphics.drawRect(0, 0, 320, 32);
-			return new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape);
+			return [
+				new SimpleButton(buttonShape, buttonShape, buttonShape, buttonShape),
+				tf
+			];
 		}
 
 		private function main():void
@@ -90,23 +96,50 @@ package
 			setImageFromWebpByteArray(new test3WebpByteArrayClass());
 
 			fileRef = new FileReference();
-			var button:SimpleButton = createButton("Select webp image... ");
+			var button:SimpleButton = createButton("Open image/webp...")[0];
 			addChild(button);
-			button.addEventListener(MouseEvent.CLICK, onButtonClick);
+			button.addEventListener(MouseEvent.CLICK, onOpen);
 
-			var button2:SimpleButton = createButton("Save webp image (q=50)... ");
+			var button2_t:Array = createButton("Save webp (q=" + encodingQuality + ")...");
+			var button2:SimpleButton = button2_t[0];
+			var button2_text:TextField = button2_t[1];
 			button2.x += button.width;
 			addChild(button2);
-			button2.addEventListener(MouseEvent.CLICK, onSaveClick);
+			button2.addEventListener(MouseEvent.CLICK, onSave);
+
+			var editTextField:TextField = new TextField();
+			editTextField.defaultTextFormat = new TextFormat('Arial', 24, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER);
+			editTextField.selectable = true;
+			editTextField.type = TextFieldType.INPUT;
+			editTextField.width = 50;
+			editTextField.height = 32;
+			editTextField.x = button.width + button2.width;
+			editTextField.y = 0;
+			editTextField.text = String(encodingQuality);
+			editTextField.background = true;
+			editTextField.backgroundColor = 0x777777;
+			editTextField.addEventListener(Event.CHANGE, function():void {
+				encodingQuality = parseFloat(editTextField.text);
+				if (encodingQuality < 0) encodingQuality = 0;
+				if (encodingQuality > 100) encodingQuality = 100;
+				if (isNaN(encodingQuality)) encodingQuality = 50;
+				button2_text.text = "Save webp (q=" + encodingQuality + ")...";
+			});
+			editTextField.addEventListener(FocusEvent.FOCUS_OUT, function():void {
+				editTextField.text = String(encodingQuality);
+			});
+			addChild(editTextField);
 
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheelHandler);
 		}
 
-		private function onSaveClick(e:MouseEvent):void
+		var encodingQuality:Number = 50;
+
+		private function onSave(e:MouseEvent):void
 		{
 			var fileRef:FileReference = new FileReference();
 			var startTime:Number = new Date().getTime();
-			var byteArray:ByteArray = libwebp.EncodeWebp(bitmapData, 50);
+			var byteArray:ByteArray = libwebp.EncodeWebp(bitmapData, encodingQuality);
 			var endTime:Number = new Date().getTime();
 			if (byteArray == null) {
 				timeTextField.text = "Couldn't encode Webp image";
@@ -118,9 +151,9 @@ package
 			}
 		}
 
-		private function onButtonClick(e:MouseEvent):void
+		private function onOpen(e:MouseEvent):void
 		{
-			fileRef.browse([new FileFilter("Webp Images (*.webp)", "*.webp")]);
+			fileRef.browse([new FileFilter("Images (*.webp;*.jpg;*.png)", "*.webp;*.jpg;*.png")]);
 			fileRef.addEventListener(Event.SELECT, onFileSelected);
 		}
 
@@ -134,10 +167,60 @@ package
 
 		private function onFileLoaded(e:Event):void
 		{
-			setImageFromWebpByteArray(e.target.data);
+			var byteArray:ByteArray = e.target.data;
+			var magic:String = byteArray.readUTFBytes(4);
+			byteArray.position = 0;
+
+			if (magic == 'RIFF') {
+				setImageFromWebpByteArray(byteArray);
+			} else {
+				var loader:Loader = new Loader();
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function():void {
+					setImageFromBitmapData(byteArray, Bitmap(loader.content).bitmapData);
+				});
+				loader.loadBytes(byteArray)
+			}
 		}
 
 		var bitmapData:BitmapData;
+
+		private function setImageFromBitmapData(byteArray:ByteArray, bitmapData:BitmapData):void
+		{
+			if (image != null)
+			{
+				stage.removeEventListener(MouseEvent.MOUSE_DOWN, pickMe);
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE, moveMe);
+				stage.removeEventListener(MouseEvent.MOUSE_UP, dropMe);
+			}
+
+			imageContainer.removeChildren();
+			image = new MovieClip();
+			var startTime:Number = new Date().getTime();
+			bitmapData.getPixel(0, 0);
+			this.bitmapData = bitmapData;
+			var endTime:Number = new Date().getTime();
+			//trace(endTime - startTime);
+			if (bitmapData == null) {
+				timeTextField.text = 'Invalid image';
+			} else {
+				timeTextField.text = 'Image with size (' + bitmapData.width + 'x' + bitmapData.height + ') ' + (int((byteArray.length / 1024)*100)/100) + 'kb loaded in ' + (endTime - startTime) + 'ms';
+			}
+			stage_resizeHandler(null);
+			var bmp:Bitmap = new Bitmap(bitmapData, PixelSnapping.AUTO, true);
+			bmp.x = -bmp.width / 2;
+			bmp.y = -bmp.height / 2;
+			image.addChild(bmp);
+			image.x = stage.stageWidth / 2;
+			image.y = stage.stageHeight / 2;
+			imageContainer.addChild(image);
+
+			stage.addEventListener(MouseEvent.MOUSE_DOWN, pickMe);
+			stage.addEventListener(MouseEvent.MOUSE_MOVE, moveMe);
+			stage.addEventListener(MouseEvent.MOUSE_UP, dropMe);
+
+			imageScale = 1;
+			updateScale();
+		}
 
 		private function setImageFromWebpByteArray(byteArray:ByteArray):void
 		{
