@@ -45,18 +45,20 @@ package
 
 		private function createButton(text:String):SimpleButton
 		{
+			var width:int = 240;
+			var height:int = 32;
 			var buttonShape:Sprite = new Sprite();
 			buttonShape.graphics.lineStyle(2, 0xFFFFFF, 0.3);
 			buttonShape.graphics.beginFill(0x000000, 0.3);
-			buttonShape.graphics.drawRect(0, 0, 320, 32);
+			buttonShape.graphics.drawRect(0, 0, width, height);
 			buttonShape.graphics.endFill();
 
 			var tf:TextField = new TextField();
 			tf.defaultTextFormat = new TextFormat('Arial', 14, 0xFFFFFF, null, null, null, null, null, TextFormatAlign.CENTER)
 			tf.selectable = false;
 			tf.text = text;
-			tf.width = 320;
-			tf.height = 32;
+			tf.width = width;
+			tf.height = height;
 			tf.y = 6;
 			buttonShape.addChild(tf);
 			//buttonShape.graphics.drawRect(0, 0, 320, 32);
@@ -93,7 +95,7 @@ package
 			button.addEventListener(MouseEvent.CLICK, onButtonClick);
 
 			var button2:SimpleButton = createButton("Save webp image (q=50)... ");
-			button2.x += 320;
+			button2.x += button.width;
 			addChild(button2);
 			button2.addEventListener(MouseEvent.CLICK, onSaveClick);
 
