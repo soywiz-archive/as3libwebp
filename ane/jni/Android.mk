@@ -25,9 +25,28 @@ LOCAL_SRC_FILES := \
 	../../libwebp/src/dec/vp8.c \
 	../../libwebp/src/dec/vp8l.c \
 	../../libwebp/src/dec/webp.c \
+	../../libwebp/src/enc/alpha.c \
+	../../libwebp/src/enc/analysis.c \
+	../../libwebp/src/enc/backward_references.c \
+	../../libwebp/src/enc/config.c \
+	../../libwebp/src/enc/cost.c \
+	../../libwebp/src/enc/filter.c \
+	../../libwebp/src/enc/frame.c \
+	../../libwebp/src/enc/histogram.c \
+	../../libwebp/src/enc/iterator.c \
+	../../libwebp/src/enc/layer.c \
+	../../libwebp/src/enc/picture.c \
+	../../libwebp/src/enc/quant.c \
+	../../libwebp/src/enc/syntax.c \
+	../../libwebp/src/enc/tree.c \
+	../../libwebp/src/enc/vp8l.c \
+	../../libwebp/src/enc/webpenc.c \
+	../../libwebp/src/enc/token.c \
 	../../libwebp/src/dsp/cpu.c \
 	../../libwebp/src/dsp/dec.c \
 	../../libwebp/src/dsp/dec_neon.c \
+	../../libwebp/src/dsp/enc.c \
+	../../libwebp/src/dsp/enc_neon.c \
 	../../libwebp/src/dsp/lossless.c \
 	../../libwebp/src/dsp/upsampling.c \
 	../../libwebp/src/dsp/upsampling_neon.c \

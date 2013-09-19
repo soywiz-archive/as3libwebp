@@ -9,6 +9,7 @@
 				<finalizer>finalizer</finalizer>
 			</applicationDeployment>
 		</platform>
+		<!--
 		<platform name="MacOS-x86">
 			<applicationDeployment>
 				<nativeLibrary>libMacOS.framework</nativeLibrary>
@@ -16,6 +17,7 @@
 				<finalizer>finalizer</finalizer>
 			</applicationDeployment>
 		</platform>
+		-->
 		<platform name="Android-ARM">
 			<applicationDeployment>			
 				<nativeLibrary>libAndroid.so</nativeLibrary>

@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../libwebp/src/webp/decode.h"
+#include "../libwebp/src/dsp/dsp.h"
 #include <FlashRuntimeExtensions.h>
 
-//#define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
+#define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
 
 /*
 FREObject WebpGetVersionAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
@@ -24,6 +25,89 @@ FREObject WebpGetVersionAne(FREContext ctx, void* functionData, uint32_t argc, F
 	
 	//fprintf_file("c:/temp/1/WebpGetVersionAne", "YAY!");
 	
+	return result;
+}
+
+FREObject newInt32(int value) { FREObject result; return (FRENewObjectFromInt32(value, &result) == FRE_OK) ? result : NULL; }
+FREObject newUInt32(unsigned int value) { FREObject result; return (FRENewObjectFromUint32(value, &result) == FRE_OK) ? result : NULL; }
+
+double getDouble(FREObject object, double _default) { double value = _default; FREGetObjectAsDouble(object, &value); return value; }
+
+FREObjectType getType(FREObject object) {
+	FREObjectType _type = FRE_TYPE_NULL;	
+	FREGetObjectType(object, &_type);
+	return _type;
+}
+
+FREObject WebpEncodeAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
+{
+	FREBitmapData input = {0};
+	FREByteArray output = {0};
+	uint8_t* output_pointer = NULL;
+	size_t output_size = 0;
+	FREObject result = NULL;
+	FREObject temp[4];
+	float quality = 50;
+
+	if (argc < 2) return NULL;
+	
+	if (getType(argv[0]) != FRE_TYPE_BITMAPDATA) return NULL;
+	quality = (float)getDouble(argv[1], 50);
+
+	FREAcquireBitmapData(argv[0], &input);
+	{
+		//fprintf_file("c:/temp/WebPEncodeBGRA", "%d:: %08X, %d, %d, %d, %f", WebPGetEncoderVersion(), input.bits32, input.width, input.height, input.width * 4, (float)quality);
+		
+		//VP8GetCPUInfo = NULL;
+		//output_size = WebPEncodeBGRA(input.bits32, input.width, input.height, input.width * 4, quality, &output_pointer);
+		
+		int y, y2;
+		int width = input.width;
+		int height = input.height;
+		int stride = input.lineStride32 * 4;
+		uint32_t* from_pointer = (uint32_t*)input.bits32;
+		uint32_t* temp_pointer = (uint32_t*)malloc(stride * height);
+		
+		for (y = 0; y < height; y++) {
+			#ifdef __ANDROID__
+				y2 = y;
+			#else
+				y2 = (height - y - 1);
+			#endif
+			memcpy(
+				temp_pointer + input.lineStride32 * y,
+				from_pointer + width * y2,
+				//output_pointer + width * y,
+				stride
+			);
+		}
+
+		output_size = WebPEncodeBGRA(temp_pointer, width, height, stride, *((int *)&quality), &output_pointer);
+		
+		free(temp_pointer);
+		
+		//output_pointer = malloc(output_size = 1024); memset(output_pointer, 0xFF, output_size);
+	}
+	FREReleaseBitmapData(argv[0]);
+	
+	if (output_size == 0) goto cleanup;
+	
+	FRENewObject("flash.utils.ByteArray", 0, NULL, &result, NULL);
+	FRESetObjectProperty(result, "length", newInt32(output_size), NULL);
+	
+	FREAcquireByteArray(result, &output);
+	{
+		if (output.length == output_size) {
+			memcpy(output.bytes, output_pointer, output_size);
+		} else {
+		}
+	}
+	FREReleaseByteArray(result);
+	
+	cleanup:;
+	
+	if (output_pointer != NULL) { free(output_pointer); output_pointer = NULL; }
+
 	return result;
 }
 
@@ -106,12 +190,16 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	FREInvalidateBitmapDataRect(bitmapDataObject, 0, 0, width, height);
 	FREReleaseBitmapData(bitmapDataObject);
 	
+	result = bitmapDataObject;
+	
+	/*
 	if ((_result = FRENewObject("Object", 0, NULL, &result, &thrownException)) != FRE_OK) {
 		goto cleanup;
 	}
 	FRESetObjectProperty(result, "width", widthObject, &thrownException);
 	FRESetObjectProperty(result, "height", heightObject, &thrownException);
 	FRESetObjectProperty(result, "data", bitmapDataObject, &thrownException);
+	*/
 	
 	//fprintf_file("c:/temp/1/WebpDecodeAne.5", "YAY!");
 
@@ -147,6 +235,7 @@ void contextInitializer(void* extData, const uint8_t* ctxType, FREContext ctx, u
 {
 	FUNC_INIT(NULL);
 	FUNC_ADD2(WebpDecodeAne);
+	FUNC_ADD2(WebpEncodeAne);
 	FUNC_ADD2(WebpGetVersionAne);
 	FUNC_END();
 	//fprintf_file("c:/temp/1/contextInitializer", "numFunctions:%d\n", *numFunctions);
