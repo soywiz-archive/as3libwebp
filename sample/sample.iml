@@ -2,7 +2,7 @@
 <module type="Flex" version="4">
   <component name="FlexBuildConfigurationManager" active="sample_air_windows">
     <configurations>
-      <configuration name="sample_air_windows" target-platform="Desktop" pure-as="true" main-class="Main" output-file="sample.swf" output-folder="$MODULE_DIR$/out/production/sample">
+      <configuration name="sample_air_windows" target-platform="Desktop" pure-as="true" main-class="MainFileSelector" output-file="sample.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies>
           <entries>
             <entry library-id="66ad4744-dd6e-4a67-9445-f8a4989f367e">
@@ -16,7 +16,7 @@
         <packaging-android />
         <packaging-ios />
       </configuration>
-      <configuration name="sample_flash" pure-as="true" main-class="Main" output-file="sample_flash.swf" output-folder="$MODULE_DIR$/out/production/sample">
+      <configuration name="sample_flash" pure-as="true" main-class="MainFileSelector" output-file="sample_flash.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies target-player="11.8">
           <entries>
             <entry library-id="19920e4e-1f40-4083-96b0-f94c28789771">
@@ -30,7 +30,7 @@
         <packaging-android />
         <packaging-ios />
       </configuration>
-      <configuration name="sample_air_android" target-platform="Mobile" pure-as="true" main-class="Main" output-file="sample_air_android.swf" output-folder="$MODULE_DIR$/out/production/sample">
+      <configuration name="sample_air_android" target-platform="Mobile" pure-as="true" main-class="MainFileSelector" output-file="sample_air_android.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies>
           <entries>
             <entry library-id="d206e0e0-bc14-4736-9480-b1cb248b30c6">
@@ -44,7 +44,7 @@
         <packaging-android enabled="true" custom-descriptor-path="$MODULE_DIR$/Main-app.xml" package-file-name="sample_air_android" />
         <packaging-ios package-file-name="sample_air_android" />
       </configuration>
-      <configuration name="sample_flash_web" pure-as="true" main-class="Main" output-file="sample_flash_web.swf" output-folder="$MODULE_DIR$/out/production/sample" use-html-wrapper="true" wrapper-template-path="$MODULE_DIR$/../html-template">
+      <configuration name="sample_flash_web" pure-as="true" main-class="MainFileSelector" output-file="sample_flash_web.swf" output-folder="$MODULE_DIR$/out/production/sample" use-html-wrapper="true" wrapper-template-path="$MODULE_DIR$/../html-template">
         <dependencies target-player="11.8">
           <entries>
             <entry library-id="ba68dd6f-6446-412e-8d29-3515a45b237b">

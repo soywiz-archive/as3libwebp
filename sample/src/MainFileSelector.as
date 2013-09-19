@@ -133,7 +133,7 @@ package
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheelHandler);
 		}
 
-		var encodingQuality:Number = 50;
+		private var encodingQuality:Number = 50;
 
 		private function onSave(e:MouseEvent):void
 		{
@@ -182,7 +182,7 @@ package
 			}
 		}
 
-		var bitmapData:BitmapData;
+		private var bitmapData:BitmapData;
 
 		private function setImageFromBitmapData(byteArray:ByteArray, bitmapData:BitmapData):void
 		{
