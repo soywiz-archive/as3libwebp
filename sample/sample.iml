@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="Flex" version="4">
-  <component name="FlexBuildConfigurationManager" active="sample_air_windows">
+  <component name="FlexBuildConfigurationManager" active="sample_flash">
     <configurations>
       <configuration name="sample_air_windows" target-platform="Desktop" pure-as="true" main-class="MainFileSelector" output-file="sample.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies>

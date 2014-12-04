@@ -22,3 +22,5 @@ _Unwind_SjLj_Unregister
 _Unwind_SjLj_RaiseException
 __muldi3
 __udivdi3
+__ashldi3
+__lshrdi3

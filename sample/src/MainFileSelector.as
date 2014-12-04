@@ -152,7 +152,7 @@ package
 
 		private function onOpen(e:MouseEvent):void
 		{
-			fileRef.browse([new FileFilter("Images (*.webp;*.jpg;*.png)", "*.webp;*.jpg;*.png")]);
+			fileRef.browse([new FileFilter("Images (*.webp;*.jpg;*.png;*.jxr)", "*.webp;*.jpg;*.png;*.jxr")]);
 			fileRef.addEventListener(Event.SELECT, onFileSelected);
 		}
 
