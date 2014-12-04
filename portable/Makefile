@@ -10,7 +10,6 @@ T05: check
 		../libwebp/src/dec/frame.c \
 		../libwebp/src/dec/idec.c \
 		../libwebp/src/dec/io.c \
-		../libwebp/src/dec/layer.c \
 		../libwebp/src/dec/quant.c \
 		../libwebp/src/dec/tree.c \
 		../libwebp/src/dec/vp8.c \
@@ -22,18 +21,20 @@ T05: check
 		../libwebp/src/dsp/enc.c \
 		../libwebp/src/dsp/lossless.c \
 		../libwebp/src/dsp/upsampling.c \
+		../libwebp/src/dsp/alpha_processing.c \
+		../libwebp/src/dsp/dec_clip_tables.c \
 		../libwebp/src/dsp/yuv.c \
 		\
 		../libwebp/src/enc/alpha.c \
 		../libwebp/src/enc/analysis.c \
 		../libwebp/src/enc/backward_references.c \
+		../libwebp/src/enc/picture_csp.c \
 		../libwebp/src/enc/config.c \
 		../libwebp/src/enc/cost.c \
 		../libwebp/src/enc/filter.c \
 		../libwebp/src/enc/frame.c \
 		../libwebp/src/enc/histogram.c \
 		../libwebp/src/enc/iterator.c \
-		../libwebp/src/enc/layer.c \
 		../libwebp/src/enc/picture.c \
 		../libwebp/src/enc/quant.c \
 		../libwebp/src/enc/syntax.c \
@@ -57,11 +58,13 @@ T05: check
 		../libwebp/src/utils/quant_levels.c \
 		../libwebp/src/utils/rescaler.c \
 		../libwebp/src/utils/thread.c \
+		../libwebp/src/utils/random.c \
 		../libwebp/src/utils/utils.c \
 		../libwebp/src/utils/quant_levels_dec.c \
 		\
 		as3api.c \
 		\
+		-flto-api=exports.txt \
 		-disable-telemetry \
 		-no-swf-preloader \
 		-emit-swc=libwebp.internal \

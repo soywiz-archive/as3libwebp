@@ -16,10 +16,6 @@
 #include "./color_cache.h"
 #include "../utils/utils.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------
 // VP8LColorCache.
 
@@ -36,11 +32,8 @@ int VP8LColorCacheInit(VP8LColorCache* const cc, int hash_bits) {
 
 void VP8LColorCacheClear(VP8LColorCache* const cc) {
   if (cc != NULL) {
-    free(cc->colors_);
+    WebPSafeFree(cc->colors_);
     cc->colors_ = NULL;
   }
 }
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}
-#endif

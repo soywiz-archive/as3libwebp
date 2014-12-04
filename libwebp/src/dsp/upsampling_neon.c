@@ -14,18 +14,18 @@
 
 #include "./dsp.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 #if defined(WEBP_USE_NEON)
 
 #include <assert.h>
 #include <arm_neon.h>
 #include <string.h>
+#include "./neon.h"
 #include "./yuv.h"
 
 #ifdef FANCY_UPSAMPLING
+
+//-----------------------------------------------------------------------------
+// U/V upsampling
 
 // Loads 9 pixels each from rows r1 and r2 and generates 16 pixels.
 #define UPSAMPLE_16PIXELS(r1, r2, out) {                                \
@@ -62,8 +62,9 @@ extern "C" {
   d = vrhadd_u8(d, diag1);                                              \
                                                                         \
   {                                                                     \
-    const uint8x8x2_t a_b = {{ a, b }};                                 \
-    const uint8x8x2_t c_d = {{ c, d }};                                 \
+    uint8x8x2_t a_b, c_d;                                               \
+    INIT_VECTOR2(a_b, a, b);                                            \
+    INIT_VECTOR2(c_d, c, d);                                            \
     vst2_u8(out,      a_b);                                             \
     vst2_u8(out + 32, c_d);                                             \
   }                                                                     \
@@ -85,125 +86,94 @@ static void Upsample16Pixels(const uint8_t *r1, const uint8_t *r2,
   Upsample16Pixels(r1, r2, out);                                        \
 }
 
-#define CY  76283
-#define CVR 89858
-#define CUG 22014
-#define CVG 45773
-#define CUB 113618
+//-----------------------------------------------------------------------------
+// YUV->RGB conversion
 
-static const int16_t coef[4] = { CVR / 4, CUG, CVG / 2, CUB / 4 };
+static const int16_t kCoeffs[4] = { kYScale, kVToR, kUToG, kVToG };
+
+#define v255 vdup_n_u8(255)
+
+#define STORE_Rgb(out, r, g, b) do {                                    \
+  uint8x8x3_t r_g_b;                                                    \
+  INIT_VECTOR3(r_g_b, r, g, b);                                         \
+  vst3_u8(out, r_g_b);                                                  \
+} while (0)
+
+#define STORE_Bgr(out, r, g, b) do {                                    \
+  uint8x8x3_t b_g_r;                                                    \
+  INIT_VECTOR3(b_g_r, b, g, r);                                         \
+  vst3_u8(out, b_g_r);                                                  \
+} while (0)
+
+#define STORE_Rgba(out, r, g, b) do {                                   \
+  uint8x8x4_t r_g_b_v255;                                               \
+  INIT_VECTOR4(r_g_b_v255, r, g, b, v255);                              \
+  vst4_u8(out, r_g_b_v255);                                             \
+} while (0)
+
+#define STORE_Bgra(out, r, g, b) do {                                   \
+  uint8x8x4_t b_g_r_v255;                                               \
+  INIT_VECTOR4(b_g_r_v255, b, g, r, v255);                              \
+  vst4_u8(out, b_g_r_v255);                                             \
+} while (0)
 
 #define CONVERT8(FMT, XSTEP, N, src_y, src_uv, out, cur_x) {            \
   int i;                                                                \
   for (i = 0; i < N; i += 8) {                                          \
-    int off = ((cur_x) + i) * XSTEP;                                    \
-    uint8x8_t y  = vld1_u8(src_y + (cur_x)  + i);                       \
+    const int off = ((cur_x) + i) * XSTEP;                              \
+    uint8x8_t y  = vld1_u8((src_y) + (cur_x)  + i);                     \
     uint8x8_t u  = vld1_u8((src_uv) + i);                               \
     uint8x8_t v  = vld1_u8((src_uv) + i + 16);                          \
-    int16x8_t yy = vreinterpretq_s16_u16(vsubl_u8(y, u16));             \
-    int16x8_t uu = vreinterpretq_s16_u16(vsubl_u8(u, u128));            \
-    int16x8_t vv = vreinterpretq_s16_u16(vsubl_u8(v, u128));            \
-                                                                        \
-    int16x8_t ud = vshlq_n_s16(uu, 1);                                  \
-    int16x8_t vd = vshlq_n_s16(vv, 1);                                  \
-                                                                        \
-    int32x4_t vrl = vqdmlal_lane_s16(vshll_n_s16(vget_low_s16(vv), 1),  \
-                                     vget_low_s16(vd),  cf16, 0);       \
-    int32x4_t vrh = vqdmlal_lane_s16(vshll_n_s16(vget_high_s16(vv), 1), \
-                                     vget_high_s16(vd), cf16, 0);       \
-    int16x8_t vr = vcombine_s16(vrshrn_n_s32(vrl, 16),                  \
-                                vrshrn_n_s32(vrh, 16));                 \
-                                                                        \
-    int32x4_t vl = vmovl_s16(vget_low_s16(vv));                         \
-    int32x4_t vh = vmovl_s16(vget_high_s16(vv));                        \
-    int32x4_t ugl = vmlal_lane_s16(vl, vget_low_s16(uu),  cf16, 1);     \
-    int32x4_t ugh = vmlal_lane_s16(vh, vget_high_s16(uu), cf16, 1);     \
-    int32x4_t gcl = vqdmlal_lane_s16(ugl, vget_low_s16(vv),  cf16, 2);  \
-    int32x4_t gch = vqdmlal_lane_s16(ugh, vget_high_s16(vv), cf16, 2);  \
-    int16x8_t gc = vcombine_s16(vrshrn_n_s32(gcl, 16),                  \
-                                vrshrn_n_s32(gch, 16));                 \
-                                                                        \
-    int32x4_t ubl = vqdmlal_lane_s16(vshll_n_s16(vget_low_s16(uu), 1),  \
-                                     vget_low_s16(ud),  cf16, 3);       \
-    int32x4_t ubh = vqdmlal_lane_s16(vshll_n_s16(vget_high_s16(uu), 1), \
-                                     vget_high_s16(ud), cf16, 3);       \
-    int16x8_t ub = vcombine_s16(vrshrn_n_s32(ubl, 16),                  \
-                                vrshrn_n_s32(ubh, 16));                 \
-                                                                        \
-    int32x4_t rl = vaddl_s16(vget_low_s16(yy),  vget_low_s16(vr));      \
-    int32x4_t rh = vaddl_s16(vget_high_s16(yy), vget_high_s16(vr));     \
-    int32x4_t gl = vsubl_s16(vget_low_s16(yy),  vget_low_s16(gc));      \
-    int32x4_t gh = vsubl_s16(vget_high_s16(yy), vget_high_s16(gc));     \
-    int32x4_t bl = vaddl_s16(vget_low_s16(yy),  vget_low_s16(ub));      \
-    int32x4_t bh = vaddl_s16(vget_high_s16(yy), vget_high_s16(ub));     \
-                                                                        \
-    rl = vmulq_lane_s32(rl, cf32, 0);                                   \
-    rh = vmulq_lane_s32(rh, cf32, 0);                                   \
-    gl = vmulq_lane_s32(gl, cf32, 0);                                   \
-    gh = vmulq_lane_s32(gh, cf32, 0);                                   \
-    bl = vmulq_lane_s32(bl, cf32, 0);                                   \
-    bh = vmulq_lane_s32(bh, cf32, 0);                                   \
-                                                                        \
-    y = vqmovun_s16(vcombine_s16(vrshrn_n_s32(rl, 16),                  \
-                                 vrshrn_n_s32(rh, 16)));                \
-    u = vqmovun_s16(vcombine_s16(vrshrn_n_s32(gl, 16),                  \
-                                 vrshrn_n_s32(gh, 16)));                \
-    v = vqmovun_s16(vcombine_s16(vrshrn_n_s32(bl, 16),                  \
-                                 vrshrn_n_s32(bh, 16)));                \
-    STR_ ## FMT(out + off, y, u, v);                                    \
+    const int16x8_t yy = vreinterpretq_s16_u16(vsubl_u8(y, u16));       \
+    const int16x8_t uu = vreinterpretq_s16_u16(vsubl_u8(u, u128));      \
+    const int16x8_t vv = vreinterpretq_s16_u16(vsubl_u8(v, u128));      \
+    int32x4_t yl = vmull_lane_s16(vget_low_s16(yy),  cf16, 0);          \
+    int32x4_t yh = vmull_lane_s16(vget_high_s16(yy), cf16, 0);          \
+    const int32x4_t rl = vmlal_lane_s16(yl, vget_low_s16(vv),  cf16, 1);\
+    const int32x4_t rh = vmlal_lane_s16(yh, vget_high_s16(vv), cf16, 1);\
+    int32x4_t gl = vmlsl_lane_s16(yl, vget_low_s16(uu),  cf16, 2);      \
+    int32x4_t gh = vmlsl_lane_s16(yh, vget_high_s16(uu), cf16, 2);      \
+    const int32x4_t bl = vmovl_s16(vget_low_s16(uu));                   \
+    const int32x4_t bh = vmovl_s16(vget_high_s16(uu));                  \
+    gl = vmlsl_lane_s16(gl, vget_low_s16(vv),  cf16, 3);                \
+    gh = vmlsl_lane_s16(gh, vget_high_s16(vv), cf16, 3);                \
+    yl = vmlaq_lane_s32(yl, bl, cf32, 0);                               \
+    yh = vmlaq_lane_s32(yh, bh, cf32, 0);                               \
+    /* vrshrn_n_s32() already incorporates the rounding constant */     \
+    y = vqmovun_s16(vcombine_s16(vrshrn_n_s32(rl, YUV_FIX2),            \
+                                 vrshrn_n_s32(rh, YUV_FIX2)));          \
+    u = vqmovun_s16(vcombine_s16(vrshrn_n_s32(gl, YUV_FIX2),            \
+                                 vrshrn_n_s32(gh, YUV_FIX2)));          \
+    v = vqmovun_s16(vcombine_s16(vrshrn_n_s32(yl, YUV_FIX2),            \
+                                 vrshrn_n_s32(yh, YUV_FIX2)));          \
+    STORE_ ## FMT(out + off, y, u, v);                                  \
   }                                                                     \
 }
 
-#define v255 vmov_n_u8(255)
-
-#define STR_Rgb(out, r, g, b) do {                                      \
-  const uint8x8x3_t r_g_b = {{ r, g, b }};                              \
-  vst3_u8(out, r_g_b);                                                  \
-} while (0)
-
-#define STR_Bgr(out, r, g, b) do {                                      \
-  const uint8x8x3_t b_g_r = {{ b, g, r }};                              \
-  vst3_u8(out, b_g_r);                                                  \
-} while (0)
-
-#define STR_Rgba(out, r, g, b) do {                                     \
-  const uint8x8x4_t r_g_b_v255 = {{ r, g, b, v255 }};                   \
-  vst4_u8(out, r_g_b_v255);                                             \
-} while (0)
-
-#define STR_Bgra(out, r, g, b) do {                                     \
-  const uint8x8x4_t b_g_r_v255 = {{ b, g, r, v255 }};                   \
-  vst4_u8(out, b_g_r_v255);                                             \
-} while (0)
-
-#define CONVERT1(FMT, XSTEP, N, src_y, src_uv, rgb, cur_x) {            \
+#define CONVERT1(FUNC, XSTEP, N, src_y, src_uv, rgb, cur_x) {           \
   int i;                                                                \
   for (i = 0; i < N; i++) {                                             \
-    int off = ((cur_x) + i) * XSTEP;                                    \
-    int y = src_y[(cur_x) + i];                                         \
-    int u = (src_uv)[i];                                                \
-    int v = (src_uv)[i + 16];                                           \
-    VP8YuvTo ## FMT(y, u, v, rgb + off);                                \
+    const int off = ((cur_x) + i) * XSTEP;                              \
+    const int y = src_y[(cur_x) + i];                                   \
+    const int u = (src_uv)[i];                                          \
+    const int v = (src_uv)[i + 16];                                     \
+    FUNC(y, u, v, rgb + off);                                           \
   }                                                                     \
 }
 
 #define CONVERT2RGB_8(FMT, XSTEP, top_y, bottom_y, uv,                  \
                       top_dst, bottom_dst, cur_x, len) {                \
-  if (top_y) {                                                          \
-    CONVERT8(FMT, XSTEP, len, top_y, uv, top_dst, cur_x)                \
-  }                                                                     \
-  if (bottom_y) {                                                       \
+  CONVERT8(FMT, XSTEP, len, top_y, uv, top_dst, cur_x)                  \
+  if (bottom_y != NULL) {                                               \
     CONVERT8(FMT, XSTEP, len, bottom_y, (uv) + 32, bottom_dst, cur_x)   \
   }                                                                     \
 }
 
-#define CONVERT2RGB_1(FMT, XSTEP, top_y, bottom_y, uv,                  \
+#define CONVERT2RGB_1(FUNC, XSTEP, top_y, bottom_y, uv,                 \
                       top_dst, bottom_dst, cur_x, len) {                \
-  if (top_y) {                                                          \
-    CONVERT1(FMT, XSTEP, len, top_y, uv, top_dst, cur_x);               \
-  }                                                                     \
-  if (bottom_y) {                                                       \
-    CONVERT1(FMT, XSTEP, len, bottom_y, (uv) + 32, bottom_dst, cur_x);  \
+  CONVERT1(FUNC, XSTEP, len, top_y, uv, top_dst, cur_x);                \
+  if (bottom_y != NULL) {                                               \
+    CONVERT1(FUNC, XSTEP, len, bottom_y, (uv) + 32, bottom_dst, cur_x); \
   }                                                                     \
 }
 
@@ -225,18 +195,19 @@ static void FUNC_NAME(const uint8_t *top_y, const uint8_t *bottom_y,    \
   const int u_diag = ((top_u[0] + cur_u[0]) >> 1) + 1;                  \
   const int v_diag = ((top_v[0] + cur_v[0]) >> 1) + 1;                  \
                                                                         \
-  const int16x4_t cf16 = vld1_s16(coef);                                \
-  const int32x2_t cf32 = vmov_n_s32(CY);                                \
-  const uint8x8_t u16  = vmov_n_u8(16);                                 \
-  const uint8x8_t u128 = vmov_n_u8(128);                                \
+  const int16x4_t cf16 = vld1_s16(kCoeffs);                             \
+  const int32x2_t cf32 = vdup_n_s32(kUToB);                             \
+  const uint8x8_t u16  = vdup_n_u8(16);                                 \
+  const uint8x8_t u128 = vdup_n_u8(128);                                \
                                                                         \
   /* Treat the first pixel in regular way */                            \
-  if (top_y) {                                                          \
+  assert(top_y != NULL);                                                \
+  {                                                                     \
     const int u0 = (top_u[0] + u_diag) >> 1;                            \
     const int v0 = (top_v[0] + v_diag) >> 1;                            \
     VP8YuvTo ## FMT(top_y[0], u0, v0, top_dst);                         \
   }                                                                     \
-  if (bottom_y) {                                                       \
+  if (bottom_y != NULL) {                                               \
     const int u0 = (cur_u[0] + u_diag) >> 1;                            \
     const int v0 = (cur_v[0] + v_diag) >> 1;                            \
     VP8YuvTo ## FMT(bottom_y[0], u0, v0, bottom_dst);                   \
@@ -255,15 +226,15 @@ static void FUNC_NAME(const uint8_t *top_y, const uint8_t *bottom_y,    \
                                                                         \
   UPSAMPLE_LAST_BLOCK(top_u, cur_u, leftover, r_uv);                    \
   UPSAMPLE_LAST_BLOCK(top_v, cur_v, leftover, r_uv + 16);               \
-  CONVERT2RGB_1(FMT, XSTEP, top_y, bottom_y, r_uv,                      \
+  CONVERT2RGB_1(VP8YuvTo ## FMT, XSTEP, top_y, bottom_y, r_uv,          \
                 top_dst, bottom_dst, last_pos, len - last_pos);         \
 }
 
 // NEON variants of the fancy upsampler.
-NEON_UPSAMPLE_FUNC(UpsampleRgbLinePairNEON,  Rgb,  3)
-NEON_UPSAMPLE_FUNC(UpsampleBgrLinePairNEON,  Bgr,  3)
-NEON_UPSAMPLE_FUNC(UpsampleRgbaLinePairNEON, Rgba, 4)
-NEON_UPSAMPLE_FUNC(UpsampleBgraLinePairNEON, Bgra, 4)
+NEON_UPSAMPLE_FUNC(UpsampleRgbLinePair,  Rgb,  3)
+NEON_UPSAMPLE_FUNC(UpsampleBgrLinePair,  Bgr,  3)
+NEON_UPSAMPLE_FUNC(UpsampleRgbaLinePair, Rgba, 4)
+NEON_UPSAMPLE_FUNC(UpsampleBgraLinePair, Bgra, 4)
 
 #endif  // FANCY_UPSAMPLING
 
@@ -271,24 +242,26 @@ NEON_UPSAMPLE_FUNC(UpsampleBgraLinePairNEON, Bgra, 4)
 
 //------------------------------------------------------------------------------
 
+extern void WebPInitUpsamplersNEON(void);
+
+#ifdef FANCY_UPSAMPLING
+
 extern WebPUpsampleLinePairFunc WebPUpsamplers[/* MODE_LAST */];
 
 void WebPInitUpsamplersNEON(void) {
 #if defined(WEBP_USE_NEON)
-  WebPUpsamplers[MODE_RGB]  = UpsampleRgbLinePairNEON;
-  WebPUpsamplers[MODE_RGBA] = UpsampleRgbaLinePairNEON;
-  WebPUpsamplers[MODE_BGR]  = UpsampleBgrLinePairNEON;
-  WebPUpsamplers[MODE_BGRA] = UpsampleBgraLinePairNEON;
+  WebPUpsamplers[MODE_RGB]  = UpsampleRgbLinePair;
+  WebPUpsamplers[MODE_RGBA] = UpsampleRgbaLinePair;
+  WebPUpsamplers[MODE_BGR]  = UpsampleBgrLinePair;
+  WebPUpsamplers[MODE_BGRA] = UpsampleBgraLinePair;
+  WebPUpsamplers[MODE_rgbA] = UpsampleRgbaLinePair;
+  WebPUpsamplers[MODE_bgrA] = UpsampleBgraLinePair;
 #endif   // WEBP_USE_NEON
 }
 
-void WebPInitPremultiplyNEON(void) {
-#if defined(WEBP_USE_NEON)
-  WebPUpsamplers[MODE_rgbA] = UpsampleRgbaLinePairNEON;
-  WebPUpsamplers[MODE_bgrA] = UpsampleBgraLinePairNEON;
-#endif   // WEBP_USE_NEON
-}
+#else
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif
+// this empty function is to avoid an empty .o
+void WebPInitUpsamplersNEON(void) {}
+
+#endif  // FANCY_UPSAMPLING

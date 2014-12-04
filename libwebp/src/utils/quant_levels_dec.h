@@ -16,16 +16,19 @@
 
 #include "../webp/types.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-// Apply post-processing to input 'data' of size 'width'x'height' assuming
-// that the source was quantized to a reduced number of levels.
-// Returns false in case of error (data is NULL, invalid parameters, ...).
-int DequantizeLevels(uint8_t* const data, int width, int height);
+// Apply post-processing to input 'data' of size 'width'x'height' assuming that
+// the source was quantized to a reduced number of levels.
+// Strength is in [0..100] and controls the amount of dithering applied.
+// Returns false in case of error (data is NULL, invalid parameters,
+// malloc failure, ...).
+int WebPDequantizeLevels(uint8_t* const data, int width, int height,
+                         int strength);
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 

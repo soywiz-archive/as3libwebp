@@ -16,11 +16,11 @@
 
 #include "./types.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#define WEBP_ENCODER_ABI_VERSION 0x0201    // MAJOR(8b) + MINOR(8b)
+#define WEBP_ENCODER_ABI_VERSION 0x0202    // MAJOR(8b) + MINOR(8b)
 
 // Note: forward declaring enumerations is not allowed in (strict) C and C++,
 // the types are left here for reference.
@@ -117,7 +117,8 @@ struct WebPConfig {
 
   int show_compressed;    // if true, export the compressed picture back.
                           // In-loop filtering is not applied.
-  int preprocessing;      // preprocessing filter (0=none, 1=segment-smooth)
+  int preprocessing;      // preprocessing filter:
+                          // 0=none, 1=segment-smooth, 2=pseudo-random dithering
   int partitions;         // log2(number of token partitions) in [0..3]. Default
                           // is set to 0 for easier progressive decoding.
   int partition_limit;    // quality degradation allowed to fit the 512k limit
@@ -165,6 +166,16 @@ static WEBP_INLINE int WebPConfigPreset(WebPConfig* config,
   return WebPConfigInitInternal(config, preset, quality,
                                 WEBP_ENCODER_ABI_VERSION);
 }
+
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+// Activate the lossless compression mode with the desired efficiency level
+// between 0 (fastest, lowest compression) and 9 (slower, best compression).
+// A good default level is '6', providing a fair tradeoff between compression
+// speed and final compressed size.
+// This function will overwrite several fields from config: 'method', 'quality'
+// and 'lossless'. Returns false in case of parameter error.
+WEBP_EXTERN(int) WebPConfigLosslessPreset(WebPConfig* config, int level);
+#endif
 
 // Returns true if 'config' is non-NULL and all configuration parameters are
 // within their valid ranges.
@@ -220,9 +231,18 @@ struct WebPMemoryWriter {
 // The following must be called first before any use.
 WEBP_EXTERN(void) WebPMemoryWriterInit(WebPMemoryWriter* writer);
 
+#if WEBP_ENCODER_ABI_VERSION > 0x0203
+// The following must be called to deallocate writer->mem memory. The 'writer'
+// object itself is not deallocated.
+WEBP_EXTERN(void) WebPMemoryWriterClear(WebPMemoryWriter* writer);
+#endif
 // The custom writer to be used with WebPMemoryWriter as custom_ptr. Upon
 // completion, writer.mem and writer.size will hold the coded data.
-// writer.mem must be freed using the call 'free(writer.mem)'.
+#if WEBP_ENCODER_ABI_VERSION > 0x0203
+// writer.mem must be freed by calling WebPMemoryWriterClear.
+#else
+// writer.mem must be freed by calling 'free(writer.mem)'.
+#endif
 WEBP_EXTERN(int) WebPMemoryWrite(const uint8_t* data, size_t data_size,
                                  const WebPPicture* picture);
 
@@ -234,16 +254,9 @@ typedef int (*WebPProgressHook)(int percent, const WebPPicture* picture);
 // Color spaces.
 typedef enum WebPEncCSP {
   // chroma sampling
-  WEBP_YUV420 = 0,   // 4:2:0
-  WEBP_YUV422 = 1,   // 4:2:2
-  WEBP_YUV444 = 2,   // 4:4:4
-  WEBP_YUV400 = 3,   // grayscale
-  WEBP_CSP_UV_MASK = 3,   // bit-mask to get the UV sampling factors
-  // alpha channel variants
-  WEBP_YUV420A = 4,
-  WEBP_YUV422A = 5,
-  WEBP_YUV444A = 6,
-  WEBP_YUV400A = 7,   // grayscale + alpha
+  WEBP_YUV420  = 0,        // 4:2:0
+  WEBP_YUV420A = 4,        // alpha channel variant
+  WEBP_CSP_UV_MASK = 3,    // bit-mask to get the UV sampling factors
   WEBP_CSP_ALPHA_BIT = 4   // bit that is set if alpha is present
 } WebPEncCSP;
 
@@ -322,17 +335,15 @@ struct WebPPicture {
 
   uint32_t pad3[3];       // padding for later use
 
-  // Unused for now: original samples (for non-YUV420 modes)
-  uint8_t *u0, *v0;
-  int uv0_stride;
-
-  uint32_t pad4[7];       // padding for later use
+  // Unused for now
+  uint8_t *pad4, *pad5;
+  uint32_t pad6[8];       // padding for later use
 
   // PRIVATE FIELDS
   ////////////////////
   void* memory_;          // row chunk of memory for yuva planes
   void* memory_argb_;     // and for argb too.
-  void* pad5[2];          // padding for later use
+  void* pad7[2];          // padding for later use
 };
 
 // Internal, version-checked, entry point
@@ -435,13 +446,30 @@ WEBP_EXTERN(int) WebPPictureImportBGRA(
 WEBP_EXTERN(int) WebPPictureImportBGRX(
     WebPPicture* picture, const uint8_t* bgrx, int bgrx_stride);
 
-// Converts picture->argb data to the YUVA format specified by 'colorspace'.
+// Converts picture->argb data to the YUV420A format. The 'colorspace'
+// parameter is deprecated and should be equal to WEBP_YUV420.
 // Upon return, picture->use_argb is set to false. The presence of real
 // non-opaque transparent values is detected, and 'colorspace' will be
 // adjusted accordingly. Note that this method is lossy.
 // Returns false in case of error.
 WEBP_EXTERN(int) WebPPictureARGBToYUVA(WebPPicture* picture,
-                                       WebPEncCSP colorspace);
+                                       WebPEncCSP /*colorspace = WEBP_YUV420*/);
+
+// Same as WebPPictureARGBToYUVA(), but the conversion is done using
+// pseudo-random dithering with a strength 'dithering' between
+// 0.0 (no dithering) and 1.0 (maximum dithering). This is useful
+// for photographic picture.
+WEBP_EXTERN(int) WebPPictureARGBToYUVADithered(
+    WebPPicture* picture, WebPEncCSP colorspace, float dithering);
+
+#if WEBP_ENCODER_ABI_VERSION > 0x0204
+// Performs 'smart' RGBA->YUVA420 downsampling and colorspace conversion.
+// Downsampling is handled with extra care in case of color clipping. This
+// method is roughly 2x slower than WebPPictureARGBToYUVA() but produces better
+// YUV representation.
+// Returns false in case of error.
+WEBP_EXTERN(int) WebPPictureSmartARGBToYUVA(WebPPicture* picture);
+#endif
 
 // Converts picture->yuv to picture->argb and sets picture->use_argb to true.
 // The input format must be YUV_420 or YUV_420A.
@@ -451,15 +479,20 @@ WEBP_EXTERN(int) WebPPictureARGBToYUVA(WebPPicture* picture,
 // Returns false in case of error.
 WEBP_EXTERN(int) WebPPictureYUVAToARGB(WebPPicture* picture);
 
-// Helper function: given a width x height plane of YUV(A) samples
-// (with stride 'stride'), clean-up the YUV samples under fully transparent
-// area, to help compressibility (no guarantee, though).
+// Helper function: given a width x height plane of RGBA or YUV(A) samples
+// clean-up the YUV or RGB samples under fully transparent area, to help
+// compressibility (no guarantee, though).
 WEBP_EXTERN(void) WebPCleanupTransparentArea(WebPPicture* picture);
 
 // Scan the picture 'picture' for the presence of non fully opaque alpha values.
 // Returns true in such case. Otherwise returns false (indicating that the
 // alpha plane can be ignored altogether e.g.).
 WEBP_EXTERN(int) WebPPictureHasTransparency(const WebPPicture* picture);
+
+// Remove the transparency information (if present) by blending the color with
+// the background color 'background_rgb' (specified as 24bit RGB triplet).
+// After this call, all alpha values are reset to 0xff.
+WEBP_EXTERN(void) WebPBlendAlpha(WebPPicture* pic, uint32_t background_rgb);
 
 //------------------------------------------------------------------------------
 // Main call
@@ -478,7 +511,7 @@ WEBP_EXTERN(int) WebPEncode(const WebPConfig* config, WebPPicture* picture);
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 

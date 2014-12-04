@@ -19,10 +19,6 @@
 #include "./cost.h"
 #include "../utils/utils.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 #define MAX_ITERS_K_MEANS  6
 
 //------------------------------------------------------------------------------
@@ -34,7 +30,7 @@ static void SmoothSegmentMap(VP8Encoder* const enc) {
   const int w = enc->mb_w_;
   const int h = enc->mb_h_;
   const int majority_cnt_3_x_3_grid = 5;
-  uint8_t* const tmp = (uint8_t*)WebPSafeMalloc((uint64_t)w * h, sizeof(*tmp));
+  uint8_t* const tmp = (uint8_t*)WebPSafeMalloc(w * h, sizeof(*tmp));
   assert((uint64_t)(w * h) == (uint64_t)w * h);   // no overflow, as per spec
 
   if (tmp == NULL) return;
@@ -55,6 +51,7 @@ static void SmoothSegmentMap(VP8Encoder* const enc) {
       for (n = 0; n < NUM_MB_SEGMENTS; ++n) {
         if (cnt[n] >= majority_cnt_3_x_3_grid) {
           majority_seg = n;
+          break;
         }
       }
       tmp[x + y * w] = majority_seg;
@@ -66,7 +63,7 @@ static void SmoothSegmentMap(VP8Encoder* const enc) {
       mb->segment_ = tmp[x + y * w];
     }
   }
-  free(tmp);
+  WebPSafeFree(tmp);
 }
 
 //------------------------------------------------------------------------------
@@ -144,7 +141,11 @@ static void MergeHistograms(const VP8Histogram* const in,
 
 static void AssignSegments(VP8Encoder* const enc,
                            const int alphas[MAX_ALPHA + 1]) {
-  const int nb = enc->segment_hdr_.num_segments_;
+  // 'num_segments_' is previously validated and <= NUM_MB_SEGMENTS, but an
+  // explicit check is needed to avoid spurious warning about 'n + 1' exceeding
+  // array bounds of 'centers' with some compilers (noticed with gcc-4.9).
+  const int nb = (enc->segment_hdr_.num_segments_ < NUM_MB_SEGMENTS) ?
+                 enc->segment_hdr_.num_segments_ : NUM_MB_SEGMENTS;
   int centers[NUM_MB_SEGMENTS];
   int weighted_average = 0;
   int map[MAX_ALPHA + 1];
@@ -152,6 +153,9 @@ static void AssignSegments(VP8Encoder* const enc,
   int min_a = 0, max_a = MAX_ALPHA, range_a;
   // 'int' type is ok for histo, and won't overflow
   int accum[NUM_MB_SEGMENTS], dist_accum[NUM_MB_SEGMENTS];
+
+  assert(nb >= 1);
+  assert(nb <= NUM_MB_SEGMENTS);
 
   // bracket the input
   for (n = 0; n <= MAX_ALPHA && alphas[n] == 0; ++n) {}
@@ -161,8 +165,9 @@ static void AssignSegments(VP8Encoder* const enc,
   range_a = max_a - min_a;
 
   // Spread initial centers evenly
-  for (n = 1, k = 0; n < 2 * nb; n += 2) {
-    centers[k++] = min_a + (n * range_a) / (2 * nb);
+  for (k = 0, n = 1; k < nb; ++k, n += 2) {
+    assert(n < 2 * nb);
+    centers[k] = min_a + (n * range_a) / (2 * nb);
   }
 
   for (k = 0; k < MAX_ITERS_K_MEANS; ++k) {     // few iters are enough
@@ -177,7 +182,7 @@ static void AssignSegments(VP8Encoder* const enc,
     n = 0;    // track the nearest center for current 'a'
     for (a = min_a; a <= max_a; ++a) {
       if (alphas[a]) {
-        while (n < nb - 1 && abs(a - centers[n + 1]) < abs(a - centers[n])) {
+        while (n + 1 < nb && abs(a - centers[n + 1]) < abs(a - centers[n])) {
           n++;
         }
         map[a] = n;
@@ -225,18 +230,15 @@ static void AssignSegments(VP8Encoder* const enc,
 // susceptibility and set best modes for this macroblock.
 // Segment assignment is done later.
 
-// Number of modes to inspect for alpha_ evaluation. For high-quality settings
-// (method >= FAST_ANALYSIS_METHOD) we don't need to test all the possible modes
-// during the analysis phase.
-#define FAST_ANALYSIS_METHOD 4  // method above which we do partial analysis
+// Number of modes to inspect for alpha_ evaluation. We don't need to test all
+// the possible modes during the analysis phase: we risk falling into a local
+// optimum, or be subject to boundary effect
 #define MAX_INTRA16_MODE 2
 #define MAX_INTRA4_MODE  2
 #define MAX_UV_MODE      2
 
 static int MBAnalyzeBestIntra16Mode(VP8EncIterator* const it) {
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_INTRA16_MODE
-                                                  : NUM_PRED_MODES;
+  const int max_mode = MAX_INTRA16_MODE;
   int mode;
   int best_alpha = DEFAULT_ALPHA;
   int best_mode = 0;
@@ -262,9 +264,7 @@ static int MBAnalyzeBestIntra16Mode(VP8EncIterator* const it) {
 static int MBAnalyzeBestIntra4Mode(VP8EncIterator* const it,
                                    int best_alpha) {
   uint8_t modes[16];
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_INTRA4_MODE
-                                                  : NUM_BMODES;
+  const int max_mode = MAX_INTRA4_MODE;
   int i4_alpha;
   VP8Histogram total_histo = { { 0 } };
   int cur_histo = 0;
@@ -306,10 +306,9 @@ static int MBAnalyzeBestIntra4Mode(VP8EncIterator* const it,
 static int MBAnalyzeBestUVMode(VP8EncIterator* const it) {
   int best_alpha = DEFAULT_ALPHA;
   int best_mode = 0;
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_UV_MODE
-                                                  : NUM_PRED_MODES;
+  const int max_mode = MAX_UV_MODE;
   int mode;
+
   VP8MakeChroma8Preds(it);
   for (mode = 0; mode < max_mode; ++mode) {
     VP8Histogram histo = { { 0 } };
@@ -384,38 +383,116 @@ static void ResetAllMBInfo(VP8Encoder* const enc) {
   // Default susceptibilities.
   enc->dqm_[0].alpha_ = 0;
   enc->dqm_[0].beta_ = 0;
-  // Note: we can't compute this alpha_ / uv_alpha_.
+  // Note: we can't compute this alpha_ / uv_alpha_ -> set to default value.
+  enc->alpha_ = 0;
+  enc->uv_alpha_ = 0;
   WebPReportProgress(enc->pic_, enc->percent_ + 20, &enc->percent_);
 }
 
+// struct used to collect job result
+typedef struct {
+  WebPWorker worker;
+  int alphas[MAX_ALPHA + 1];
+  int alpha, uv_alpha;
+  VP8EncIterator it;
+  int delta_progress;
+} SegmentJob;
+
+// main work call
+static int DoSegmentsJob(SegmentJob* const job, VP8EncIterator* const it) {
+  int ok = 1;
+  if (!VP8IteratorIsDone(it)) {
+    uint8_t tmp[32 + ALIGN_CST];
+    uint8_t* const scratch = (uint8_t*)DO_ALIGN(tmp);
+    do {
+      // Let's pretend we have perfect lossless reconstruction.
+      VP8IteratorImport(it, scratch);
+      MBAnalyze(it, job->alphas, &job->alpha, &job->uv_alpha);
+      ok = VP8IteratorProgress(it, job->delta_progress);
+    } while (ok && VP8IteratorNext(it));
+  }
+  return ok;
+}
+
+static void MergeJobs(const SegmentJob* const src, SegmentJob* const dst) {
+  int i;
+  for (i = 0; i <= MAX_ALPHA; ++i) dst->alphas[i] += src->alphas[i];
+  dst->alpha += src->alpha;
+  dst->uv_alpha += src->uv_alpha;
+}
+
+// initialize the job struct with some TODOs
+static void InitSegmentJob(VP8Encoder* const enc, SegmentJob* const job,
+                           int start_row, int end_row) {
+  WebPGetWorkerInterface()->Init(&job->worker);
+  job->worker.data1 = job;
+  job->worker.data2 = &job->it;
+  job->worker.hook = (WebPWorkerHook)DoSegmentsJob;
+  VP8IteratorInit(enc, &job->it);
+  VP8IteratorSetRow(&job->it, start_row);
+  VP8IteratorSetCountDown(&job->it, (end_row - start_row) * enc->mb_w_);
+  memset(job->alphas, 0, sizeof(job->alphas));
+  job->alpha = 0;
+  job->uv_alpha = 0;
+  // only one of both jobs can record the progress, since we don't
+  // expect the user's hook to be multi-thread safe
+  job->delta_progress = (start_row == 0) ? 20 : 0;
+}
+
+// main entry point
 int VP8EncAnalyze(VP8Encoder* const enc) {
   int ok = 1;
   const int do_segments =
       enc->config_->emulate_jpeg_size ||   // We need the complexity evaluation.
       (enc->segment_hdr_.num_segments_ > 1) ||
       (enc->method_ == 0);  // for method 0, we need preds_[] to be filled.
-  enc->alpha_ = 0;
-  enc->uv_alpha_ = 0;
   if (do_segments) {
-    int alphas[MAX_ALPHA + 1] = { 0 };
-    VP8EncIterator it;
-
-    VP8IteratorInit(enc, &it);
-    do {
-      VP8IteratorImport(&it);
-      MBAnalyze(&it, alphas, &enc->alpha_, &enc->uv_alpha_);
-      ok = VP8IteratorProgress(&it, 20);
-      // Let's pretend we have perfect lossless reconstruction.
-    } while (ok && VP8IteratorNext(&it, it.yuv_in_));
-    enc->alpha_ /= enc->mb_w_ * enc->mb_h_;
-    enc->uv_alpha_ /= enc->mb_w_ * enc->mb_h_;
-    if (ok) AssignSegments(enc, alphas);
+    const int last_row = enc->mb_h_;
+    // We give a little more than a half work to the main thread.
+    const int split_row = (9 * last_row + 15) >> 4;
+    const int total_mb = last_row * enc->mb_w_;
+#ifdef WEBP_USE_THREAD
+    const int kMinSplitRow = 2;  // minimal rows needed for mt to be worth it
+    const int do_mt = (enc->thread_level_ > 0) && (split_row >= kMinSplitRow);
+#else
+    const int do_mt = 0;
+#endif
+    const WebPWorkerInterface* const worker_interface =
+        WebPGetWorkerInterface();
+    SegmentJob main_job;
+    if (do_mt) {
+      SegmentJob side_job;
+      // Note the use of '&' instead of '&&' because we must call the functions
+      // no matter what.
+      InitSegmentJob(enc, &main_job, 0, split_row);
+      InitSegmentJob(enc, &side_job, split_row, last_row);
+      // we don't need to call Reset() on main_job.worker, since we're calling
+      // WebPWorkerExecute() on it
+      ok &= worker_interface->Reset(&side_job.worker);
+      // launch the two jobs in parallel
+      if (ok) {
+        worker_interface->Launch(&side_job.worker);
+        worker_interface->Execute(&main_job.worker);
+        ok &= worker_interface->Sync(&side_job.worker);
+        ok &= worker_interface->Sync(&main_job.worker);
+      }
+      worker_interface->End(&side_job.worker);
+      if (ok) MergeJobs(&side_job, &main_job);  // merge results together
+    } else {
+      // Even for single-thread case, we use the generic Worker tools.
+      InitSegmentJob(enc, &main_job, 0, last_row);
+      worker_interface->Execute(&main_job.worker);
+      ok &= worker_interface->Sync(&main_job.worker);
+    }
+    worker_interface->End(&main_job.worker);
+    if (ok) {
+      enc->alpha_ = main_job.alpha / total_mb;
+      enc->uv_alpha_ = main_job.uv_alpha / total_mb;
+      AssignSegments(enc, main_job.alphas);
+    }
   } else {   // Use only one default segment.
     ResetAllMBInfo(enc);
   }
   return ok;
 }
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif

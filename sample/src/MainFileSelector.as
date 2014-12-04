@@ -91,7 +91,6 @@ package
 
 			addChild(timeTextField);
 
-
 			DecodeWebp(new test3WebpByteArrayClass());
 			setImageFromWebpByteArray(new test3WebpByteArrayClass());
 

@@ -9,7 +9,7 @@
               <dependency linkage="Merged" />
             </entry>
           </entries>
-          <sdk name="airsdk" />
+          <sdk name="airsdk15" />
         </dependencies>
         <compiler-options />
         <packaging-air-desktop package-file-name="sample" />
@@ -17,13 +17,13 @@
         <packaging-ios />
       </configuration>
       <configuration name="sample_flash" pure-as="true" main-class="MainFileSelector" output-file="sample_flash.swf" output-folder="$MODULE_DIR$/out/production/sample">
-        <dependencies target-player="11.8">
+        <dependencies target-player="15.0">
           <entries>
             <entry library-id="19920e4e-1f40-4083-96b0-f94c28789771">
               <dependency linkage="Merged" />
             </entry>
           </entries>
-          <sdk name="airsdk" />
+          <sdk name="airsdk15" />
         </dependencies>
         <compiler-options />
         <packaging-air-desktop />
@@ -37,7 +37,7 @@
               <dependency linkage="Merged" />
             </entry>
           </entries>
-          <sdk name="airsdk" />
+          <sdk name="airsdk15" />
         </dependencies>
         <compiler-options />
         <packaging-air-desktop />
@@ -45,13 +45,13 @@
         <packaging-ios package-file-name="sample_air_android" />
       </configuration>
       <configuration name="sample_flash_web" pure-as="true" main-class="MainFileSelector" output-file="sample_flash_web.swf" output-folder="$MODULE_DIR$/out/production/sample" use-html-wrapper="true" wrapper-template-path="$MODULE_DIR$/../html-template">
-        <dependencies target-player="11.8">
+        <dependencies target-player="15.0">
           <entries>
             <entry library-id="ba68dd6f-6446-412e-8d29-3515a45b237b">
               <dependency linkage="Merged" />
             </entry>
           </entries>
-          <sdk name="airsdk" />
+          <sdk name="airsdk15" />
         </dependencies>
         <compiler-options />
         <packaging-air-desktop />
@@ -66,7 +66,7 @@
     <content url="file://$MODULE_DIR$/..">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="airsdk" jdkType="Flex SDK Type (new)" />
+    <orderEntry type="jdk" jdkName="airsdk15" jdkType="Flex SDK Type (new)" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library type="flex">
@@ -110,4 +110,3 @@
     </orderEntry>
   </component>
 </module>
-

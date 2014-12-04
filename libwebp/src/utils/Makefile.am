@@ -1,4 +1,3 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src
 noinst_LTLIBRARIES = libwebputils.la
 
 if BUILD_LIBWEBPDECODER
@@ -11,8 +10,10 @@ commondir = $(includedir)/webp
 COMMON_SOURCES =
 COMMON_SOURCES += bit_reader.c
 COMMON_SOURCES += bit_reader.h
+COMMON_SOURCES += bit_reader_inl.h
 COMMON_SOURCES += color_cache.c
 COMMON_SOURCES += color_cache.h
+COMMON_SOURCES += endian_inl.h
 COMMON_SOURCES += filters.c
 COMMON_SOURCES += filters.h
 COMMON_SOURCES += huffman.c
@@ -21,6 +22,8 @@ COMMON_SOURCES += quant_levels_dec.c
 COMMON_SOURCES += quant_levels_dec.h
 COMMON_SOURCES += rescaler.c
 COMMON_SOURCES += rescaler.h
+COMMON_SOURCES += random.c
+COMMON_SOURCES += random.h
 COMMON_SOURCES += thread.c
 COMMON_SOURCES += thread.h
 COMMON_SOURCES += utils.c

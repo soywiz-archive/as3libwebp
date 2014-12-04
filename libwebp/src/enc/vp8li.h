@@ -14,12 +14,13 @@
 #ifndef WEBP_ENC_VP8LI_H_
 #define WEBP_ENC_VP8LI_H_
 
+#include "./backward_references.h"
 #include "./histogram.h"
 #include "../utils/bit_writer.h"
 #include "../webp/encode.h"
 #include "../webp/format_constants.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -45,6 +46,12 @@ typedef struct {
   int use_palette_;
   int palette_size_;
   uint32_t palette_[MAX_PALETTE_SIZE];
+
+  // Some 'scratch' (potentially large) objects.
+  struct VP8LBackwardRefs refs_[2];  // Backward Refs array corresponding to
+                                     // LZ77 & RLE coding.
+  VP8LHashChain hash_chain_;         // HashChain data for constructing
+                                     // backward references.
 } VP8LEncoder;
 
 //------------------------------------------------------------------------------
@@ -63,7 +70,7 @@ WebPEncodingError VP8LEncodeStream(const WebPConfig* const config,
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 
