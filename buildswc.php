@@ -192,6 +192,7 @@ include $(BUILD_SHARED_LIBRARY)
 			$this->passthru("wine", $args);
 			//$args[] = getRelativePath(__DIR__, __DIR__ . '/libwebp/src/' . trim($file));
 		}
+		$objs[] = 'webp_extension.c';
 
 		$args = array_merge(['cl'], $flags, $objs);
 		$args[] = 'ane/libs/win/FlashRuntimeExtensions.lib';
@@ -263,3 +264,4 @@ $lib->buildAne();
 //$lib->buildAneWindows();
 $lib->buildSwc(false);
 $lib->buildSwc(true);
+// /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c-header -arch armv7
