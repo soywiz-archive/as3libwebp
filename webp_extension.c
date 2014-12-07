@@ -10,21 +10,10 @@
 
 #define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
 
-/*
-FREObject WebpGetVersionAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
-{
-	fclose(fopen("c:/temp/1/WebpGetVersionAne", "wb"));
-	return NULL;
-}
-*/
-
 FREObject WebpGetVersionAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
 {
 	FREObject result;
 	FRENewObjectFromUint32(1, &result);
-	
-	//fprintf_file("c:/temp/1/WebpGetVersionAne", "YAY!");
-	
 	return result;
 }
 
@@ -41,53 +30,34 @@ FREObjectType getType(FREObject object) {
 
 FREObject WebpEncodeAne(FREContext ctx, void* functionData, uint32_t argc, FREObject argv[])
 {
-	FREBitmapData input = {0};
+	FREBitmapData2 input = {0};
 	FREByteArray output = {0};
 	uint8_t* output_pointer = NULL;
 	size_t output_size = 0;
 	FREObject result = NULL;
 	FREObject temp[4];
 	float quality = 50;
+	int y, y2;
+	int width = input.width;
+	int height = input.height;
+	int stride = input.lineStride32 * 4;
+	uint32_t* from_pointer = (uint32_t*)input.bits32;
+	uint32_t* temp_pointer = (uint32_t*)malloc(stride * height);
 
 	if (argc < 2) return NULL;
 	
 	if (getType(argv[0]) != FRE_TYPE_BITMAPDATA) return NULL;
 	quality = (float)getDouble(argv[1], 50);
 
-	FREAcquireBitmapData(argv[0], &input);
-	{
-		//fprintf_file("c:/temp/WebPEncodeBGRA", "%d:: %08X, %d, %d, %d, %f", WebPGetEncoderVersion(), input.bits32, input.width, input.height, input.width * 4, (float)quality);
-		
-		//VP8GetCPUInfo = NULL;
-		//output_size = WebPEncodeBGRA(input.bits32, input.width, input.height, input.width * 4, quality, &output_pointer);
-		
-		int y, y2;
-		int width = input.width;
-		int height = input.height;
-		int stride = input.lineStride32 * 4;
-		uint32_t* from_pointer = (uint32_t*)input.bits32;
-		uint32_t* temp_pointer = (uint32_t*)malloc(stride * height);
-		
-		for (y = 0; y < height; y++) {
-			#ifdef __ANDROID__
-				y2 = y;
-			#else
-				y2 = (height - y - 1);
-			#endif
-			memcpy(
-				temp_pointer + input.lineStride32 * y,
-				from_pointer + width * y2,
-				//output_pointer + width * y,
-				stride
-			);
-		}
-
-		output_size = WebPEncodeBGRA(temp_pointer, width, height, stride, *((int *)&quality), &output_pointer);
-		
-		free(temp_pointer);
-		
-		//output_pointer = malloc(output_size = 1024); memset(output_pointer, 0xFF, output_size);
+	FREAcquireBitmapData2(argv[0], &input);
+	for (y = 0; y < height; y++) {
+		y2 = input.isInvertedY ? (height - y - 1) : y;
+		memcpy(temp_pointer + input.lineStride32 * y, from_pointer + width * y2, stride);
 	}
+
+	output_size = WebPEncodeBGRA(temp_pointer, width, height, stride, *((int *)&quality), &output_pointer);
+
+	free(temp_pointer);
 	FREReleaseBitmapData(argv[0]);
 	
 	if (output_size == 0) goto cleanup;
@@ -96,18 +66,12 @@ FREObject WebpEncodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	FRESetObjectProperty(result, "length", newInt32(output_size), NULL);
 	
 	FREAcquireByteArray(result, &output);
-	{
-		if (output.length == output_size) {
-			memcpy(output.bytes, output_pointer, output_size);
-		} else {
-		}
-	}
+	if (output.length == output_size) memcpy(output.bytes, output_pointer, output_size);
 	FREReleaseByteArray(result);
 	
-	cleanup:;
+cleanup:;
 	
 	if (output_pointer != NULL) { free(output_pointer); output_pointer = NULL; }
-
 	return result;
 }
 
@@ -117,41 +81,25 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	FREObject result;
 	FREResult _result;
 	FREObject bitmapDataObject;
-	FREBitmapData bitmapData;
+	FREBitmapData2 bitmapData;
 	FREObject thrownException;
 	uint32_t* output_pointer = NULL;
 	int width, height;
 	FREObject widthObject, heightObject;
 	FREObject callArgv[8];
-	
+	int y, y2;
+	FREObjectType _type = FRE_TYPE_NULL;
+
 	if (argc < 1) return NULL;
 
-	{
-		FREObjectType _type = FRE_TYPE_NULL;	
-		_type = FRE_TYPE_NULL;
-		if (FREGetObjectType(argv[0], &_type) != FRE_OK) return NULL;
-		if (_type != FRE_TYPE_BYTEARRAY) return NULL;
-	}
-	
-	if ((_result = FREAcquireByteArray(argv[0], &input)) != FRE_OK) {
-		goto cleanup;
-	}
-	{
-		//output_pointer = (uint32_t *)WebPDecodeARGB(
-		//output_pointer = (uint32_t *)WebPDecodeRGBA(
-		output_pointer = (uint32_t *)WebPDecodeBGRA(
-			(const uint8_t*)input.bytes,
-			(size_t)input.length,
-			&width, &height
-		);
-	}
-	if ((_result = FREReleaseByteArray(argv[0])) != FRE_OK) {
-		goto cleanup;
-	}
-	
-	if (output_pointer == NULL) {
-		return NULL;
-	}
+	_type = FRE_TYPE_NULL;
+	if (FREGetObjectType(argv[0], &_type) != FRE_OK) return NULL;
+	if (_type != FRE_TYPE_BYTEARRAY) return NULL;
+
+	if ((_result = FREAcquireByteArray(argv[0], &input)) != FRE_OK) goto cleanup;
+	output_pointer = (uint32_t *)WebPDecodeBGRA((const uint8_t*)input.bytes, (size_t)input.length, &width, &height);
+	if ((_result = FREReleaseByteArray(argv[0])) != FRE_OK) goto cleanup;
+	if (output_pointer == NULL) goto cleanup;
 
 	FRENewObjectFromInt32(width, &widthObject);
 	FRENewObjectFromInt32(height, &heightObject);
@@ -161,53 +109,21 @@ FREObject WebpDecodeAne(FREContext ctx, void* functionData, uint32_t argc, FREOb
 	FRENewObjectFromBool(1, &callArgv[2]);
 	FRENewObjectFromUint32((unsigned int)0xFFFFFFFF, &callArgv[3]);
 
-	if ((_result = FRENewObject("flash.display.BitmapData", 4, callArgv, &bitmapDataObject, &thrownException)) != FRE_OK) {
-		goto cleanup;
-	}
-	
-	FREAcquireBitmapData(bitmapDataObject, &bitmapData);
-	{
-		int y, y2;
-		for (y = 0; y < height; y++) {
-			#ifdef __ANDROID__
-				y2 = y;
-			#else
-				y2 = (height - y - 1);
-			#endif
-			memcpy(
-				bitmapData.bits32 + bitmapData.lineStride32 * y,
-				output_pointer + width * y2,
-				//output_pointer + width * y,
-				bitmapData.lineStride32 * 4
-			);
-		}
-		//lineStride32
-		//memcpy(bitmapData.bits32, output_pointer, width * height * 4);
-		//bitmapData.hasAlpha = 1;
-		//bitmapData.isInvertedY = 0;
-		//bitmapData.isPremultiplied = 0;
+	if ((_result = FRENewObject("flash.display.BitmapData", 4, callArgv, &bitmapDataObject, &thrownException)) != FRE_OK) goto cleanup;
+
+	FREAcquireBitmapData2(bitmapDataObject, &bitmapData);
+	for (y = 0; y < height; y++) {
+		y2 = bitmapData.isInvertedY ? (height - y - 1) : y;
+		memcpy(bitmapData.bits32 + bitmapData.lineStride32 * y, output_pointer + width * y2, bitmapData.lineStride32 * 4);
 	}
 	FREInvalidateBitmapDataRect(bitmapDataObject, 0, 0, width, height);
 	FREReleaseBitmapData(bitmapDataObject);
 	
 	result = bitmapDataObject;
 	
-	/*
-	if ((_result = FRENewObject("Object", 0, NULL, &result, &thrownException)) != FRE_OK) {
-		goto cleanup;
-	}
-	FRESetObjectProperty(result, "width", widthObject, &thrownException);
-	FRESetObjectProperty(result, "height", heightObject, &thrownException);
-	FRESetObjectProperty(result, "data", bitmapDataObject, &thrownException);
-	*/
-	
-	//fprintf_file("c:/temp/1/WebpDecodeAne.5", "YAY!");
-
 cleanup:;
 	if (output_pointer != NULL) { free(output_pointer); output_pointer = NULL; }
-	
-	//fprintf_file("c:/temp/1/WebpDecodeAne.cleanup", "YAY!");
-	
+
 	return result;
 }
 

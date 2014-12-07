@@ -19,7 +19,7 @@
       <configuration name="sample_flash" pure-as="true" main-class="MainFileSelector" output-file="sample_flash.swf" output-folder="$MODULE_DIR$/out/production/sample">
         <dependencies target-player="15.0">
           <entries>
-            <entry library-id="19920e4e-1f40-4083-96b0-f94c28789771">
+            <entry library-id="4dd13e03-2f36-4e4b-8dca-1743719c04be">
               <dependency linkage="Merged" />
             </entry>
           </entries>
@@ -47,7 +47,7 @@
       <configuration name="sample_flash_web" pure-as="true" main-class="MainFileSelector" output-file="sample_flash_web.swf" output-folder="$MODULE_DIR$/out/production/sample" use-html-wrapper="true" wrapper-template-path="$MODULE_DIR$/../html-template">
         <dependencies target-player="15.0">
           <entries>
-            <entry library-id="ba68dd6f-6446-412e-8d29-3515a45b237b">
+            <entry library-id="cf99052f-c527-4be3-816c-4408cc7f45c5">
               <dependency linkage="Merged" />
             </entry>
           </entries>
@@ -80,16 +80,6 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library type="flex">
-        <properties id="19920e4e-1f40-4083-96b0-f94c28789771" />
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library type="flex">
         <properties id="d206e0e0-bc14-4736-9480-b1cb248b30c6" />
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../bin/libwebp.ane!/" />
@@ -101,6 +91,16 @@
     <orderEntry type="module-library" exported="">
       <library type="flex">
         <properties id="ba68dd6f-6446-412e-8d29-3515a45b237b" />
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library type="flex">
+        <properties id="4dd13e03-2f36-4e4b-8dca-1743719c04be" />
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../bin/libwebp.swc!/" />
         </CLASSES>

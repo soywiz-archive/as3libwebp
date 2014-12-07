@@ -28,7 +28,6 @@ package
 
 	import libwebp.DecodeWebp;
 	import libwebp.EncodeWebp;
-	import libwebp.internal.___ashldi3;
 
 	[SWF(width = 1280, height = 720, frameRate = 60)]
 	public class MainFileSelector extends Sprite
@@ -319,8 +318,8 @@ package
 				timeTextField.y = stage.stageHeight - 16 - 4;
 			}, 0);
 			//timeTextField.autoSize = TextFieldAutoSize.RIGHT;
+
 		}
 	}
 }
-
 
