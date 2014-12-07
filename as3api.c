@@ -1,4 +1,4 @@
-#include "../libwebp/src/webp/decode.h"
+#include "libwebp/src/webp/decode.h"
 #include <stdlib.h>
 #include "AS3/AS3.h"
 
@@ -29,6 +29,8 @@ void DecodeWebp()
 	AS3_GetScalarFromVar(input_address, input_address);
 	AS3_GetScalarFromVar(input_length, input_length);
 
+	//output_pointer = WebPDecodeARGB((const uint8_t*)input_address, (size_t)input_length, &width, &height);
+	//output_pointer = WebPDecodeRGBA((const uint8_t*)input_address, (size_t)input_length, &width, &height);
 	output_pointer = WebPDecodeBGRA((const uint8_t*)input_address, (size_t)input_length, &width, &height);
 	
     inline_as3(
@@ -53,6 +55,17 @@ void DecodeWebp()
 			: : 
 		);
 
+		/*
+		inline_as3(
+			"var outputByteArray:ByteArray = new ByteArray();\n"
+			"CModule.readBytes(output_pointer, width * height * 4, outputByteArray);\n"
+			"outputByteArray.position = 0;\n"
+			"var bitmapData:BitmapData = new BitmapData(width, height);\n"
+			"bitmapData.setPixels(new Rectangle(0, 0, width, height), outputByteArray);\n"
+			: : 
+		);
+		*/
+
 		free(output_pointer);
 
 		inline_as3(
@@ -61,10 +74,5 @@ void DecodeWebp()
 		);
 	}
 }
-
-typedef struct
-{
-	uint8_t B, G, R, A;
-} BGRA;
 
 int main() { AS3_GoAsync(); }

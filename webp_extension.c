@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../libwebp/src/webp/decode.h"
-#include "../libwebp/src/dsp/dsp.h"
-#include <FlashRuntimeExtensions.h>
+#include "libwebp/src/webp/decode.h"
+#include "libwebp/src/dsp/dsp.h"
+#include "FlashRuntimeExtensions.h"
 
 #define fprintf_file(filename, ...) { FILE *f = fopen(filename, "wb"); fprintf(f, __VA_ARGS__); fclose(f); }
 

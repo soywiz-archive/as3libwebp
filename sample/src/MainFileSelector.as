@@ -28,6 +28,7 @@ package
 
 	import libwebp.DecodeWebp;
 	import libwebp.EncodeWebp;
+	import libwebp.internal.___ashldi3;
 
 	[SWF(width = 1280, height = 720, frameRate = 60)]
 	public class MainFileSelector extends Sprite

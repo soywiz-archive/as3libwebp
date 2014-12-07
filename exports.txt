@@ -1,4 +1,3 @@
-# built in symbols that must always be preserved
 _start1
 malloc
 free
@@ -14,8 +13,6 @@ WebPEncodeBGRA
 _WebPEncodeBGRA
 WebPDecodeBGRA
 _WebPDecodeBGRA
-
-# symbols for C++ exception handling
 _Unwind_SjLj_Register
 _Unwind_SjLj_Resume
 _Unwind_SjLj_Unregister
